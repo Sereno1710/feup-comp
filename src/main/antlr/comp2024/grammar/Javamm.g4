@@ -15,8 +15,13 @@ ADD : '+' ;
 
 CLASS : 'class' ;
 INT : 'int' ;
+STRING : 'String' ;
+ARRAY : '[]' ;
+BOOLEAN : 'boolean' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
+IMPORT : 'import' ;
+EXTENDS : 'extends' ;
 
 INTEGER : [0-9] ;
 ID : [a-zA-Z]+ ;
@@ -24,23 +29,40 @@ ID : [a-zA-Z]+ ;
 WS : [ \t\n\r\f]+ -> skip ;
 
 program
-    : classDecl EOF
+    : importDecl*
+        classDecl EOF
     ;
+
+importDecl
+    : IMPORT ID('.'ID)* SEMI ;
 
 
 classDecl
-    : CLASS name=ID
+    : CLASS name=ID (EXTENDS name=ID)?
         LCURLY
-        methodDecl*
+        mainMethod?
+        (varDecl | methodDecl)*
         RCURLY
     ;
 
 varDecl
     : type name=ID SEMI
+    | type ID SEMI
     ;
 
 type
-    : name= INT ;
+    : name=INT(ARRAY)?
+    | name=STRING(ARRAY)?
+    | name=BOOLEAN
+    | name=ID
+    ;
+
+mainMethod
+    : 'static' 'void' 'main' LPAREN type ID RPAREN
+        LCURLY
+        varDecl*
+        RCURLY
+    ;
 
 methodDecl locals[boolean isPublic=false]
     : (PUBLIC {$isPublic=true;})?
