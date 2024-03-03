@@ -57,12 +57,13 @@ program
     ;
 
 importDecl
-    : IMPORT ID(DOT ID)* SEMI ;
+    : IMPORT value+=ID(DOT value+=ID)* SEMI ;
 
 
 classDecl
-    : CLASS name=ID (EXTENDS name=ID)?
+    : CLASS name=ID (EXTENDS sup=ID)?
         LCURLY
+        (varDecl | methodDecl)*
         mainMethod?
         (varDecl | methodDecl)*
         RCURLY
@@ -70,18 +71,17 @@ classDecl
 
 varDecl
     : type name=ID SEMI
-    | type ID SEMI
     ;
 
 type
-    : name=INT(ARRAY | VARGS)?
-    | name=STRING(ARRAY | VARGS)?
-    | name=BOOLEAN(ARRAY | VARGS)?
-    | name=ID(ARRAY | VARGS)?
+    : typ=INT(ARRAY | VARGS)?
+    | typ=STRING(ARRAY | VARGS)?
+    | typ=BOOLEAN(ARRAY | VARGS)?
+    | typ=ID(ARRAY | VARGS)?
     ;
 
 mainMethod
-    : 'static' 'void' 'main' LPAREN type ID RPAREN
+    : 'public' 'static' 'void' 'main' LPAREN type ID RPAREN
         LCURLY
         varDecl*
         RCURLY
@@ -91,7 +91,7 @@ mainMethod
 methodDecl locals[boolean isPublic=false]
     : (PUBLIC {$isPublic=true;})?
         type name=ID
-        LPAREN param (CMA param)* RPAREN
+        LPAREN (param (CMA param)*)? RPAREN
         LCURLY varDecl* stmt* RCURLY
     ;
 
