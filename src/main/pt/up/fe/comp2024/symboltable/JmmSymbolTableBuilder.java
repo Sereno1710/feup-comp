@@ -8,6 +8,7 @@ import pt.up.fe.comp2024.ast.TypeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static pt.up.fe.comp2024.ast.Kind.METHOD_DECL;
 import static pt.up.fe.comp2024.ast.Kind.VAR_DECL;
@@ -107,8 +108,8 @@ public class JmmSymbolTableBuilder {
 
     private static List<Symbol> buildFields(JmmNode classDecl) {
         return classDecl.getChildren(VAR_DECL).stream()
-                .map(varDecl -> new Symbol(new Type(varDecl.get("typ"), false), varDecl.get("name")))
-                .toList();
+                .map(varDecl -> new Symbol(new Type(varDecl.get("typ"), varDecl.getOptional("array").isPresent()), varDecl.get("name")))
+                .collect(Collectors.toList());
     }
 
 }
