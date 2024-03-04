@@ -81,7 +81,7 @@ type
     ;
 
 mainMethod
-    : 'public' 'static' 'void' 'main' LPAREN type ID RPAREN
+    : ('public')? 'static' 'void' 'main' LPAREN type ID RPAREN
         LCURLY
         varDecl*
         RCURLY
