@@ -110,7 +110,7 @@ param
 stmt
     : expr SEMI #EmptyStmt
     | LCURLY (stmt)* RCURLY #BracketsStmt
-    | ifexpr (elseifexpr)* (elseexpr)? #IfStmt
+    | ifexpr elseexpr #IfStmt
     | WHILE LPAREN expr RPAREN stmt* #WhileStmt
     | name=ID EQUALS expr SEMI #AssignStmt //
     | name=ID LRET expr? RRET EQUALS expr SEMI #AssignStmt
@@ -119,9 +119,6 @@ stmt
 
 ifexpr
     : IF LPAREN expr RPAREN stmt;
-
-elseifexpr
-    : ELSE + IF  LPAREN expr RPAREN stmt;
 
 elseexpr
     : ELSE stmt;
@@ -138,15 +135,19 @@ expr
     | expr op=(EQ | NEQ) expr #BooleanExpr
     | expr op=AND expr #BooleanExpr
     | expr op=OR expr #BooleanExpr
-    | name=ID DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)* #FuncExpr
-    | name=ID DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)* ((LRET expr RRET)* (DOT 'length')*) #FuncExpr
-    | value=INTEGER #IntegerLiteral //
-    | name=ID (LRET expr RRET)* #VarRefExpr //
+    | expr LRET expr LRET #AccExpr
     | name=ID (DOT 'length')* #LengthExpr
+    | name=ID (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)+ #FuncExpr
     | NOT expr #NotExpr
     | NEW type LRET expr RRET #ArrayExpr
-    | LRET expr (CMA expr)* RRET #ArrayExpr
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
+    | LRET (expr (CMA expr)*)? RRET #ArrayExpr
+    | value=INTEGER #IntegerLiteral //
+    | name=ID #StringLiteral //
+    | value= 'true' #BooleanLiteral
+    | value= 'false' #BooleanLiteral
+    | value= 'this' #ObjectLiteral
     ;
+
 
 
