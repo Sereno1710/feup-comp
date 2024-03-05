@@ -77,10 +77,10 @@ varDecl
     ;
 
 type
-    : name=INT(array=ARRAY | VARGS)?
-    | name=STRING(array=ARRAY | VARGS)?
-    | name=BOOLEAN(array=ARRAY | VARGS)?
-    | name=ID(array=ARRAY | VARGS)?
+    : name=INT(LRET RRET | VARGS)?
+    | name=STRING(LRET RRET | VARGS)?
+    | name=BOOLEAN(LRET RRET | VARGS)?
+    | name=ID(LRET RRET | VARGS)?
     ;
 
 
