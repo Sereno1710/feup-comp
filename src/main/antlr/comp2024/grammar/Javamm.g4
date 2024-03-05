@@ -87,7 +87,7 @@ type
 mainMethod
     : ('public')? 'static' ret='void' name='main' LPAREN param RPAREN
         LCURLY
-        varDecl*
+        (varDecl | stmt)*
         RCURLY
     ;
 
@@ -96,7 +96,7 @@ methodDecl locals[boolean isPublic=false]
     : (PUBLIC {$isPublic=true;})?
         type name=ID
         LPAREN params? RPAREN
-        LCURLY varDecl* stmt* RCURLY
+        LCURLY (varDecl | stmt)* RCURLY
     ;
 
 params
@@ -143,9 +143,9 @@ expr
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
     | LRET (expr (CMA expr)*)? RRET #ArrayExpr
     | value=INTEGER #IntegerLiteral //
-    | name=ID #StringLiteral //
     | value= 'true' #BooleanLiteral
     | value= 'false' #BooleanLiteral
+    | name=ID #StringLiteral //
     | value= 'this' #ObjectLiteral
     ;
 
