@@ -74,15 +74,15 @@ varDecl
     ;
 
 type
-    : name=INT(ARRAY | VARGS)?
-    | name=STRING(ARRAY | VARGS)?
-    | name=BOOLEAN(ARRAY | VARGS)?
-    | name=ID(ARRAY | VARGS)?
+    : name=INT(array=ARRAY | VARGS)?
+    | name=STRING(array=ARRAY | VARGS)?
+    | name=BOOLEAN(array=ARRAY | VARGS)?
+    | name=ID(array=ARRAY | VARGS)?
     ;
 
 
 mainMethod
-    : ('public')? 'static' 'void' name='main' LPAREN type ID RPAREN
+    : ('public')? 'static' 'void' name='main' LPAREN param RPAREN
         LCURLY
         varDecl*
         RCURLY
@@ -92,8 +92,12 @@ mainMethod
 methodDecl locals[boolean isPublic=false]
     : (PUBLIC {$isPublic=true;})?
         type name=ID
-        LPAREN (param (CMA param)*)? RPAREN
+        LPAREN params? RPAREN
         LCURLY varDecl* stmt* RCURLY
+    ;
+
+params
+    : param (CMA param)*
     ;
 
 param
