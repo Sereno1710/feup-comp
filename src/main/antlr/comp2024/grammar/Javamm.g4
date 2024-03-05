@@ -138,11 +138,11 @@ expr
     | expr op=(EQ | NEQ) expr #BooleanExpr
     | expr op=AND expr #BooleanExpr
     | expr op=OR expr #BooleanExpr
-    | name=ID DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)* #FuncExpr
-    | name=ID DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)* ((LRET expr RRET)* (DOT 'length')*) #FuncExpr
+    | expr LRET expr LRET #AccExpr
+    | name=ID (DOT 'length')* #LengthExpr
+    | name=ID (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)+ #FuncExpr
     | value=INTEGER #IntegerLiteral //
     | name=ID (LRET expr RRET)* #VarRefExpr //
-    | name=ID (DOT 'length')* #LengthExpr
     | NOT expr #NotExpr
     | NEW type LRET expr RRET #ArrayExpr
     | LRET expr (CMA expr)* RRET #ArrayExpr
