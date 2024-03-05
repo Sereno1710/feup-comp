@@ -141,12 +141,12 @@ expr
     | expr LRET expr LRET #AccExpr
     | name=ID (DOT 'length')* #LengthExpr
     | name=ID (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)+ #FuncExpr
-    | value=INTEGER #IntegerLiteral //
-    | name=ID (LRET expr RRET)* #VarRefExpr //
     | NOT expr #NotExpr
     | NEW type LRET expr RRET #ArrayExpr
-    | LRET expr (CMA expr)* RRET #ArrayExpr
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
+    | LRET (expr (CMA expr)*)? RRET #ArrayExpr
+    | value=INTEGER #IntegerLiteral //
+    | name=ID #StringLiteral //
     ;
 
 
