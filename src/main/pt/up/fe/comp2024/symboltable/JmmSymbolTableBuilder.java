@@ -10,8 +10,7 @@ import pt.up.fe.specs.util.SpecsCheck;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static pt.up.fe.comp2024.ast.Kind.METHOD_DECL;
-import static pt.up.fe.comp2024.ast.Kind.VAR_DECL;
+import static pt.up.fe.comp2024.ast.Kind.*;
 
 public class JmmSymbolTableBuilder {
 
@@ -82,12 +81,19 @@ public class JmmSymbolTableBuilder {
     }
 
     private static List<String> buildMethods(JmmNode classDecl) {
-
-        return classDecl.getChildren(METHOD_DECL).stream()
+        List<String> methods = classDecl.getChildren(METHOD_DECL).stream()
                 .map(method -> method.get("name"))
                 .toList();
-    }
 
+        List<String> main = classDecl.getChildren(MAIN_METHOD).stream()
+                .map(mainMethod -> mainMethod.get("name"))  // Corrected the method name retrieval
+                .toList();
+
+        List<String> list = new ArrayList<>(methods);
+        list.addAll(main);
+
+        return list;
+    }
 
     private static List<Symbol> getLocalsList(JmmNode methodDecl) {
         // TODO: Simple implementation that needs to be expanded
@@ -108,8 +114,15 @@ public class JmmSymbolTableBuilder {
 
     private static List<Symbol> buildFields(JmmNode classDecl) {
         return classDecl.getChildren(VAR_DECL).stream()
-                .map(varDecl -> new Symbol(new Type(varDecl.get("typ"), varDecl.getOptional("array").isPresent()), varDecl.get("name")))
+                .map(varDecl -> {
+                    String typeName = varDecl.getChild(0).get("name"); // Assuming type is the first child
+                    boolean isArray = varDecl.getOptional("array").isPresent();
+                    String fieldName = varDecl.get("name");
+                    return new Symbol(new Type(typeName, isArray), fieldName);
+                })
                 .collect(Collectors.toList());
     }
+
+
 
 }

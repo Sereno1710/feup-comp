@@ -46,7 +46,7 @@ ELSE : 'else' ;
 WHILE : 'while' ;
 
 INTEGER: '0' | [1-9][0-9]*;
-ID: [a-zA-Z] [a-zA-Z_0-9]*;
+ID: [a-zA-Z_$] [a-zA-Z_$0-9]*;
 
 WS : [ \t\n\r\f]+ -> skip ;
 
@@ -74,14 +74,15 @@ varDecl
     ;
 
 type
-    : typ=INT(ARRAY | VARGS)?
-    | typ=STRING(ARRAY | VARGS)?
-    | typ=BOOLEAN(ARRAY | VARGS)?
-    | typ=ID(ARRAY | VARGS)?
+    : name=INT(ARRAY | VARGS)?
+    | name=STRING(ARRAY | VARGS)?
+    | name=BOOLEAN(ARRAY | VARGS)?
+    | name=ID(ARRAY | VARGS)?
     ;
 
+
 mainMethod
-    : ('public')? 'static' 'void' 'main' LPAREN type ID RPAREN
+    : ('public')? 'static' 'void' name='main' LPAREN type ID RPAREN
         LCURLY
         varDecl*
         RCURLY
@@ -107,7 +108,7 @@ stmt
     | WHILE LPAREN expr RPAREN LCURLY stmt* RCURLY #WhileStmtCurly
     | WHILE LPAREN expr RPAREN stmt? #WhileStmt
     | expr EQUALS expr SEMI #AssignStmt //
-    | RETURN expr SEMI #ReturnStmt
+    | RETURN name=expr SEMI #ReturnStmt
     ;
 
 expr
