@@ -47,13 +47,14 @@ WHILE : 'while' ;
 
 INTEGER: '0' | [1-9][0-9]*;
 ID: [a-zA-Z_$] [a-zA-Z_$0-9]*;
-
+SINGLE_COMMENT : '//' .*? '\n' -> skip ;
+MULTI_COMMENT : '/*' .*? '*/' -> skip ;
 WS : [ \t\n\r\f]+ -> skip ;
 
 
 program
-    : importDecl*
-        classDecl EOF
+    : stmt EOF
+    | importDecl* classDecl EOF
     ;
 
 importDecl
