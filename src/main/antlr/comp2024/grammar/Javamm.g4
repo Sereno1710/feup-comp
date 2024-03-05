@@ -82,7 +82,7 @@ type
 
 
 mainMethod
-    : ('public')? 'static' 'void' name='main' LPAREN param RPAREN
+    : ('public')? 'static' ret='void' name='main' LPAREN param RPAREN
         LCURLY
         varDecl*
         RCURLY

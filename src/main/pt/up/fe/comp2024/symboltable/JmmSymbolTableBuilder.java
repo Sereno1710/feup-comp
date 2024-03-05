@@ -50,8 +50,8 @@ public class JmmSymbolTableBuilder {
         Map<String, Type> map = new HashMap<>();
 
         classDecl.getChildren(METHOD_DECL).stream()
-                .forEach(method -> map.put(method.get("name"), new Type(TypeUtils.getIntTypeName(), false)));
-
+                .forEach(method -> map.put(method.get("name"), new Type(method.getChild(0).get("name"), method.getChild(0).hasAttribute("array"))));
+        classDecl.getChildren(MAIN_METHOD).stream().forEach(main -> map.put(main.get("name"), new Type(main.get("ret"), main.hasAttribute("array"))));
         return map;
     }
 
@@ -59,30 +59,31 @@ public class JmmSymbolTableBuilder {
         // TODO: Simple implementation that needs to be expanded
 
         Map<String, List<Symbol>> map = new HashMap<>();
-/*
-        List<JmmNode> methods = classDecl.getChildren(METHOD_DECL);
-        for (JmmNode jmmNode : methods) {
-            List<JmmNode> params = jmmNode.getChildren("param");
-            List<Symbol> symbols = new ArrayList<>();
-            for (JmmNode param : params) {
-                var type = param.getChild(0);
-                var name = param.getChild(1).get("name");
-                symbols.add(new Symbol(new Type(type.get("name"), type.hasAttribute("array")), name));
-            }
-            map.put(jmmNode.get("name"), symbols);
-        }
-*/
 
         classDecl.getChildren(METHOD_DECL).stream()
                 .forEach(method -> {
-                    JmmNode params = method.getChild(1);
                     List<Symbol> symbols = new ArrayList<>();
-                    for (var param : params.getChildren()) {
-                        symbols.add(new Symbol(new Type(param.getChild(0).get("name"), param.hasAttribute("array")), param.get("name")));
+                    if (method.getChild(1).getKind().equals("Params")) {
+                        JmmNode params = method.getChild(1);
+
+                        for (var param : params.getChildren()) {
+                            symbols.add(new Symbol(new Type(param.getChild(0).get("name"), param.hasAttribute("array")), param.get("name")));
+                        }
                     }
+                    else symbols = Collections.emptyList();
                     map.put(method.get("name"),symbols);
                 });
 
+        classDecl.getChildren(MAIN_METHOD).stream().forEach(
+                main -> {
+                        List<Symbol> m_symbols = new ArrayList<>();
+                        JmmNode m_params = main.getChild(0);
+                        for (var param: m_params.getChildren()){
+                            m_symbols.add(new Symbol(new Type(param.get("name"),param.hasAttribute("array")),"main"));
+                        }
+                        map.put(main.get("name"),m_symbols);
+                }
+        );
         return map;
     }
 
@@ -94,7 +95,7 @@ public class JmmSymbolTableBuilder {
 
         classDecl.getChildren(METHOD_DECL).stream()
                 .forEach(method -> map.put(method.get("name"), getLocalsList(method)));
-
+        classDecl.getChildren(MAIN_METHOD).stream().forEach(mainMethod -> map.put(mainMethod.get("name"), getLocalsList(mainMethod)));
         return map;
     }
 
@@ -115,12 +116,14 @@ public class JmmSymbolTableBuilder {
 
     private static List<Symbol> getLocalsList(JmmNode methodDecl) {
         // TODO: Simple implementation that needs to be expanded
-
-        var intType = new Type(TypeUtils.getIntTypeName(), false);
-
         return methodDecl.getChildren(VAR_DECL).stream()
-                .map(varDecl -> new Symbol(intType, varDecl.get("name")))
-                .toList();
+                .map(varDecl -> {
+                    String typeName = varDecl.getChild(0).get("name"); // Assuming type is the first child
+                    boolean isArray = varDecl.getChild(0).hasAttribute("array");
+                    String fieldName = varDecl.get("name");
+                    return new Symbol(new Type(typeName, isArray), fieldName);
+                })
+                .collect(Collectors.toList());
     }
 
     private static String buildSuper(JmmNode classDecl) {
