@@ -44,6 +44,7 @@ EXTENDS : 'extends' ;
 IF : 'if' ;
 ELSE : 'else' ;
 WHILE : 'while' ;
+FOR: 'for';
 
 INTEGER: '0' | [1-9][0-9]*;
 ID: [a-zA-Z_$] [a-zA-Z_$0-9]*;
@@ -71,7 +72,8 @@ classDecl
     ;
 
 varDecl
-    : type name=ID SEMI
+    : type name=ID SEMI #VariableDecl
+    | type name='main' SEMI #VariableDecl
     ;
 
 type
@@ -108,13 +110,22 @@ param
 stmt
     : expr SEMI #EmptyStmt
     | LCURLY (stmt)* RCURLY #BracketsStmt
-    | IF LPAREN expr RPAREN LCURLY stmt* RCURLY ELSE LCURLY stmt* RCURLY #IfStmtCurly
-    | IF LPAREN expr RPAREN stmt? ELSE stmt? #IfStmt
-    | WHILE LPAREN expr RPAREN LCURLY stmt* RCURLY #WhileStmtCurly
-    | WHILE LPAREN expr RPAREN stmt? #WhileStmt
-    | expr EQUALS expr SEMI #AssignStmt //
+    | ifexpr (elseifexpr)* (elseexpr)? #IfStmt
+    | WHILE LPAREN expr RPAREN stmt* #WhileStmt
+    | name=ID EQUALS expr SEMI #AssignStmt //
+    | name=ID LRET expr? RRET EQUALS expr SEMI #AssignStmt
     | RETURN name=expr SEMI #ReturnStmt
     ;
+
+ifexpr
+    : IF LPAREN expr RPAREN stmt;
+
+elseifexpr
+    : ELSE + IF  LPAREN expr RPAREN stmt;
+
+elseexpr
+    : ELSE stmt;
+
 
 expr
     : LPAREN name=ID RPAREN (LRET expr RRET)? #ParentsArrayExpr
