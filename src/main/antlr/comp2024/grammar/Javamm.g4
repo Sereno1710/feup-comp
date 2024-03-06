@@ -36,7 +36,7 @@ NEW: 'new';
 CLASS : 'class' ;
 INT : 'int' ;
 STRING : 'String' ;
-ARRAY : '['[ ]?']';
+ARRAY : '['[ ]*']';
 BOOLEAN : 'boolean' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
@@ -121,7 +121,7 @@ stmt
     | FOR LPAREN stmt expr SEMI expr RPAREN stmt #ForStmt
     | name=ID EQUALS expr SEMI #AssignStmt //
     | name=ID LRET expr RRET EQUALS expr SEMI #AssignStmt
-    | type varDecl SEMI #AssignStmt
+    | type name=ID EQUALS expr SEMI #AssignStmt
     ;
 
 
