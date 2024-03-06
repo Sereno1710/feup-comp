@@ -36,7 +36,7 @@ NEW: 'new';
 CLASS : 'class' ;
 INT : 'int' ;
 STRING : 'String' ;
-ARRAY : '['[ ]*']';
+ARRAY : '['[ ]?']';
 BOOLEAN : 'boolean' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
@@ -48,7 +48,7 @@ WHILE : 'while' ;
 FOR: 'for';
 THIS: 'this';
 
-INTEGER: '0' | [1-9][0-9]*;
+INTEGER: [0] | [1-9][0-9]*;
 ID: [a-zA-Z_$] [a-zA-Z_$0-9]*;
 SINGLE_COMMENT : '//' .*? '\n' -> skip ;
 MULTI_COMMENT : '/*' .*? '*/' -> skip ;
@@ -80,9 +80,9 @@ type
     : name=INT array=ARRAY
     | name=INT VARGS
     | name=INT
-    | name=STRING(array=ARRAY | VARGS)?
-    | name=BOOLEAN(array=ARRAY | VARGS)?
-    | name=ID(array=ARRAY | VARGS)?
+    | name=STRING (array=ARRAY | VARGS)?
+    | name=BOOLEAN (array=ARRAY | VARGS)?
+    | name=ID (array=ARRAY | VARGS)?
     ;
 
 
@@ -134,7 +134,7 @@ expr
     | expr op=(EQ | NEQ) expr #BooleanExpr
     | expr op=AND expr #BooleanExpr
     | expr op=OR expr #BooleanExpr
-    | expr LRET expr LRET #AccExpr
+    | expr LRET expr RRET #AccExpr
     | expr (DOT 'length') #LengthExpr
     | expr (DOT name=ID)* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
     | NEW type LRET expr RRET #ArrayExpr
