@@ -55,8 +55,7 @@ WS : [ \t\n\r\f]+ -> skip ;
 
 
 program
-    : stmt EOF
-    | importDecl* classDecl EOF
+    : importDecl* classDecl EOF
     ;
 
 importDecl
@@ -77,7 +76,9 @@ varDecl
     ;
 
 type
-    : name=INT(array=ARRAY | VARGS)?
+    : name=INT array=ARRAY
+    | name=INT VARGS
+    | name=INT
     | name=STRING(array=ARRAY | VARGS)?
     | name=BOOLEAN(array=ARRAY | VARGS)?
     | name=ID(array=ARRAY | VARGS)?
@@ -112,7 +113,7 @@ param
     ;
 
 stmt
-    : LCURLY (stmt)* RCURLY #BracketsStmt
+    : LCURLY stmt* RCURLY #BracketsStmt
     | IF LPAREN expr RPAREN stmt ELSE stmt #IfStmt
     | WHILE LPAREN expr RPAREN stmt #WhileStmt
     | FOR LPAREN stmt expr SEMI expr RPAREN stmt #ForStmt
