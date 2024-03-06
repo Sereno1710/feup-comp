@@ -62,8 +62,8 @@ importDecl
     : IMPORT value+=ID(DOT value+=ID)* SEMI ;
 
 
-classDecl
-    : CLASS name=ID (EXTENDS sup=ID)?
+classDecl locals[boolean isPublic=false]
+    : (PUBLIC {$isPublic=true;})? CLASS name=ID (EXTENDS sup=ID)?
         LCURLY
         varDecl*
         (methodDecl | mainMethod)*
