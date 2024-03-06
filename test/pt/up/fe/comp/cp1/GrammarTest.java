@@ -59,7 +59,7 @@ public class GrammarTest {
 
     @Test
     public void testInstanceMethodEmpty() {
-        TestUtils.parseVerbose("int foo(int anInt, int[] anArray, boolean aBool, String aString) {return a;}",
+        TestUtils.parseVerbose("int foo(int anInt, int[   ] anArray, boolean aBool, String aString) {return a;}",
                 INSTANCE_METHOD);
     }
 

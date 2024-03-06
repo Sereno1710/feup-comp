@@ -35,7 +35,7 @@ NEW: 'new';
 CLASS : 'class' ;
 INT : 'int' ;
 STRING : 'String' ;
-ARRAY : '[]' ;
+ARRAY : '['[ ]*']';
 BOOLEAN : 'boolean' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
@@ -77,10 +77,10 @@ varDecl
     ;
 
 type
-    : name=INT(LRET RRET | VARGS)?
-    | name=STRING(LRET RRET | VARGS)?
-    | name=BOOLEAN(LRET RRET | VARGS)?
-    | name=ID(LRET RRET | VARGS)?
+    : name=INT(array=ARRAY | VARGS)?
+    | name=STRING(array=ARRAY | VARGS)?
+    | name=BOOLEAN(array=ARRAY | VARGS)?
+    | name=ID(array=ARRAY | VARGS)?
     ;
 
 
