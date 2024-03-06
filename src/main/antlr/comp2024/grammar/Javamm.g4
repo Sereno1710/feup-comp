@@ -131,7 +131,7 @@ expr
     | expr op=OR expr #BooleanExpr
     | expr LRET expr LRET #AccExpr
     | expr (DOT 'length') #LengthExpr
-    | expr (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)+ #FuncExpr
+    | expr DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
     | NEW type LRET expr RRET #ArrayExpr
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
     | NOT expr #NotExpr
