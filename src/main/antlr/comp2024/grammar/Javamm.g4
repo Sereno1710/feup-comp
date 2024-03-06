@@ -95,7 +95,11 @@ methodDecl locals[boolean isPublic=false]
     : (PUBLIC {$isPublic=true;})?
         type name=ID
         LPAREN params? RPAREN
-        LCURLY varDecl* stmt* RCURLY
+        LCURLY
+        varDecl* stmt*
+        RETURN expr SEMI
+        RCURLY
+
     ;
 
 params
@@ -109,11 +113,10 @@ param
 stmt
     : LCURLY (stmt)* RCURLY #BracketsStmt
     | ifexpr elseexpr #IfStmt
-    | WHILE LPAREN expr RPAREN stmt* #WhileStmt
+    | WHILE LPAREN expr RPAREN stmt #WhileStmt
     | expr SEMI #EmptyStmt
     | name=ID EQUALS expr SEMI #AssignStmt //
     | name=ID LRET expr? RRET EQUALS expr SEMI #AssignStmt
-    | RETURN name=expr SEMI #ReturnStmt
     ;
 
 ifexpr
@@ -134,7 +137,7 @@ expr
     | expr op=AND expr #BooleanExpr
     | expr op=OR expr #BooleanExpr
     | expr LRET expr LRET #AccExpr
-    | name=ID (DOT 'length')* #LengthExpr
+    | expr (DOT 'length') #LengthExpr
     | expr (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)+ #FuncExpr
     | NOT expr #NotExpr
     | LPAREN expr RPAREN #ParenExpr
