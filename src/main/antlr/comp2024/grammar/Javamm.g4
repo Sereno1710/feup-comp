@@ -123,6 +123,7 @@ stmt
 
 expr
     : name=ID op=(INC | DEC) #IncDecExpr
+    | NOT expr #NotExpr
     | expr op=(MUL  | DIV) expr #BinaryExpr //
     | expr op=(ADD | SUB) expr #BinaryExpr //
     | expr op=(LS | LE | GR | GE) expr #BooleanExpr
@@ -131,10 +132,9 @@ expr
     | expr op=OR expr #BooleanExpr
     | expr LRET expr LRET #AccExpr
     | expr (DOT 'length') #LengthExpr
-    | expr DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
+    | expr (DOT name=ID)* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
     | NEW type LRET expr RRET #ArrayExpr
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
-    | NOT expr #NotExpr
     | LPAREN expr RPAREN #ParenExpr
     | LRET (expr (CMA expr)*)? RRET #ArrayExpr
     | value=INTEGER #IntegerLiteral //
