@@ -42,6 +42,9 @@ PUBLIC : 'public' ;
 RETURN : 'return' ;
 IMPORT : 'import' ;
 EXTENDS : 'extends' ;
+IF : 'if' ;
+ELSE : 'else' ;
+WHILE : 'while' ;
 FOR: 'for';
 THIS: 'this';
 
@@ -113,12 +116,12 @@ param
 stmt
     : expr SEMI #ExprStmt
     | LCURLY stmt* RCURLY #BracketsStmt
-    | 'if' LPAREN expr RPAREN stmt 'else' stmt #IfStmt
-    | 'while' LPAREN expr RPAREN stmt #WhileStmt
+    | IF LPAREN expr RPAREN stmt ELSE stmt #IfStmt
+    | WHILE LPAREN expr RPAREN stmt #WhileStmt
     | FOR LPAREN stmt expr SEMI expr RPAREN stmt #ForStmt
     | name=ID EQUALS expr SEMI #AssignStmt //
     | name=ID LRET expr RRET EQUALS expr SEMI #AssignStmt
-    | type varDecl #AssignStmt
+    | type varDecl SEMI #AssignStmt
     ;
 
 
