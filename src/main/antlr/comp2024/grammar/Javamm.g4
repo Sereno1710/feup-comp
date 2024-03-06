@@ -65,9 +65,8 @@ importDecl
 classDecl
     : CLASS name=ID (EXTENDS sup=ID)?
         LCURLY
-        (varDecl | methodDecl)*
-        mainMethod?
-        (varDecl | methodDecl)*
+        varDecl*
+        (methodDecl | mainMethod)*
         RCURLY
     ;
 
@@ -85,7 +84,7 @@ type
 
 
 mainMethod
-    : ('public')? 'static' ret='void' name='main' LPAREN param RPAREN
+    : (PUBLIC)? 'static' ret='void' name='main' LPAREN param RPAREN
         LCURLY
         varDecl* stmt*
         RCURLY
@@ -108,10 +107,10 @@ param
     ;
 
 stmt
-    : expr SEMI #EmptyStmt
-    | LCURLY (stmt)* RCURLY #BracketsStmt
+    : LCURLY (stmt)* RCURLY #BracketsStmt
     | ifexpr elseexpr #IfStmt
     | WHILE LPAREN expr RPAREN stmt* #WhileStmt
+    | expr SEMI #EmptyStmt
     | name=ID EQUALS expr SEMI #AssignStmt //
     | name=ID LRET expr? RRET EQUALS expr SEMI #AssignStmt
     | RETURN name=expr SEMI #ReturnStmt
@@ -126,7 +125,6 @@ elseexpr
 
 expr
     : LPAREN name=ID RPAREN (LRET expr RRET)? #ParentsArrayExpr
-    | LPAREN expr RPAREN #ParenExpr
     | name=ID op=(INC | DEC) #IncDecExpr
     | value = NOT expr #UnaryExpr
     | expr op=(MUL  | DIV) expr #BinaryExpr //
@@ -137,8 +135,9 @@ expr
     | expr op=OR expr #BooleanExpr
     | expr LRET expr LRET #AccExpr
     | name=ID (DOT 'length')* #LengthExpr
-    | name=ID (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)+ #FuncExpr
+    | expr (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)+ #FuncExpr
     | NOT expr #NotExpr
+    | LPAREN expr RPAREN #ParenExpr
     | NEW type LRET expr RRET #ArrayExpr
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
     | LRET (expr (CMA expr)*)? RRET #ArrayExpr
