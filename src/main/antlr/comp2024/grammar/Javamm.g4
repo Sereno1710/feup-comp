@@ -16,6 +16,7 @@ MUL : '*' ;
 ADD : '+' ;
 DIV: '/' ;
 SUB: '-' ;
+REM: '%';
 LS: '<' ;
 GR: '>' ;
 LE: '<=';
@@ -35,7 +36,7 @@ NEW: 'new';
 CLASS : 'class' ;
 INT : 'int' ;
 STRING : 'String' ;
-ARRAY : '['[ ]*']';
+ARRAY : '['[ ]?']';
 BOOLEAN : 'boolean' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
@@ -54,16 +55,15 @@ WS : [ \t\n\r\f]+ -> skip ;
 
 
 program
-    : stmt EOF
-    | importDecl* classDecl EOF
+    : importDecl* classDecl EOF
     ;
 
 importDecl
     : IMPORT value+=ID(DOT value+=ID)* SEMI ;
 
 
-classDecl
-    : CLASS name=ID (EXTENDS sup=ID)?
+classDecl locals[boolean isPublic=false]
+    : (PUBLIC {$isPublic=true;})? CLASS name=ID (EXTENDS sup=ID)?
         LCURLY
         varDecl*
         (methodDecl | mainMethod)*
@@ -76,7 +76,9 @@ varDecl
     ;
 
 type
-    : name=INT(array=ARRAY | VARGS)?
+    : name=INT array=ARRAY
+    | name=INT VARGS
+    | name=INT
     | name=STRING(array=ARRAY | VARGS)?
     | name=BOOLEAN(array=ARRAY | VARGS)?
     | name=ID(array=ARRAY | VARGS)?
@@ -111,20 +113,21 @@ param
     ;
 
 stmt
-    : LCURLY (stmt)* RCURLY #BracketsStmt
+    : expr SEMI #ExprStmt
+    | LCURLY stmt* RCURLY #BracketsStmt
     | IF LPAREN expr RPAREN stmt ELSE stmt #IfStmt
     | WHILE LPAREN expr RPAREN stmt #WhileStmt
-    | FOR LPAREN expr SEMI expr SEMI expr RPAREN stmt #ForStmt
-    | expr SEMI #EmptyStmt
+    | FOR LPAREN stmt expr SEMI expr RPAREN stmt #ForStmt
     | name=ID EQUALS expr SEMI #AssignStmt //
     | name=ID LRET expr RRET EQUALS expr SEMI #AssignStmt
+    | type name=ID EQUALS expr SEMI #AssignStmt
     ;
 
 
 expr
     : name=ID op=(INC | DEC) #IncDecExpr
     | NOT expr #NotExpr
-    | expr op=(MUL  | DIV) expr #BinaryExpr //
+    | expr op=(MUL  | DIV | REM) expr #BinaryExpr //
     | expr op=(ADD | SUB) expr #BinaryExpr //
     | expr op=(LS | LE | GR | GE) expr #BooleanExpr
     | expr op=(EQ | NEQ) expr #BooleanExpr
