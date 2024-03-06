@@ -113,13 +113,14 @@ param
     ;
 
 stmt
-    : LCURLY stmt* RCURLY #BracketsStmt
+    : expr SEMI #ExprStmt
+    | LCURLY stmt* RCURLY #BracketsStmt
     | IF LPAREN expr RPAREN stmt ELSE stmt #IfStmt
     | WHILE LPAREN expr RPAREN stmt #WhileStmt
     | FOR LPAREN stmt expr SEMI expr RPAREN stmt #ForStmt
-    | expr SEMI #EmptyStmt
     | name=ID EQUALS expr SEMI #AssignStmt //
     | name=ID LRET expr RRET EQUALS expr SEMI #AssignStmt
+    | type name=ID EQUALS expr SEMI #AssignStmt
     ;
 
 
@@ -133,7 +134,7 @@ expr
     | expr op=OR expr #BooleanExpr
     | expr LRET expr LRET #AccExpr
     | expr (DOT 'length') #LengthExpr
-    | expr (DOT expr LPAREN (expr (CMA expr)*)? RPAREN)+ #FuncExpr
+    | expr DOT ID LPAREN ( expr ( CMA expr )* )? RPAREN  #FuncExpr
     | NEW type LRET expr RRET #ArrayExpr
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
     | NOT expr #NotExpr
