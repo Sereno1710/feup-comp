@@ -114,7 +114,7 @@ stmt
     : LCURLY (stmt)* RCURLY #BracketsStmt
     | IF LPAREN expr RPAREN stmt ELSE stmt #IfStmt
     | WHILE LPAREN expr RPAREN stmt #WhileStmt
-    | FOR LPAREN expr SEMI expr SEMI expr RPAREN stmt #ForStmt
+    | FOR LPAREN stmt expr SEMI expr RPAREN stmt #ForStmt
     | expr SEMI #EmptyStmt
     | name=ID EQUALS expr SEMI #AssignStmt //
     | name=ID LRET expr RRET EQUALS expr SEMI #AssignStmt
