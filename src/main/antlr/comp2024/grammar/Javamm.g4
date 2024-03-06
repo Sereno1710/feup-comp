@@ -16,6 +16,7 @@ MUL : '*' ;
 ADD : '+' ;
 DIV: '/' ;
 SUB: '-' ;
+REM: '%';
 LS: '<' ;
 GR: '>' ;
 LE: '<=';
@@ -35,7 +36,7 @@ NEW: 'new';
 CLASS : 'class' ;
 INT : 'int' ;
 STRING : 'String' ;
-ARRAY : '['[ ]*']';
+ARRAY : '['[ ]?']';
 BOOLEAN : 'boolean' ;
 PUBLIC : 'public' ;
 RETURN : 'return' ;
@@ -123,7 +124,7 @@ stmt
 
 expr
     : name=ID op=(INC | DEC) #IncDecExpr
-    | expr op=(MUL  | DIV) expr #BinaryExpr //
+    | expr op=(MUL  | DIV | REM) expr #BinaryExpr //
     | expr op=(ADD | SUB) expr #BinaryExpr //
     | expr op=(LS | LE | GR | GE) expr #BooleanExpr
     | expr op=(EQ | NEQ) expr #BooleanExpr
@@ -131,7 +132,7 @@ expr
     | expr op=OR expr #BooleanExpr
     | expr LRET expr LRET #AccExpr
     | expr (DOT 'length') #LengthExpr
-    | expr (DOT name=ID LPAREN (expr (CMA expr)*)? RPAREN)+ #FuncExpr
+    | expr (DOT expr LPAREN (expr (CMA expr)*)? RPAREN)+ #FuncExpr
     | NEW type LRET expr RRET #ArrayExpr
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
     | NOT expr #NotExpr
