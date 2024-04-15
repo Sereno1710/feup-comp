@@ -24,7 +24,7 @@ public class ClassNotImported extends AnalysisVisitor {
     public void buildVisitor() {
         addVisit(Kind.IMPORT_DECL, this::visitImportDecl);
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
-        addVisit(Kind.FUNC_EXPR, this::visitFuncExpr);
+        addVisit(Kind.CLASS_CHAIN_EXPR, this::visitFuncExpr);
     }
 
     private Void visitImportDecl(JmmNode importDecl, SymbolTable table) {
