@@ -42,7 +42,6 @@ public class JmmSymbolTableBuilder {
 
         classDecl.getChildren(METHOD_DECL).stream()
                 .forEach(method -> map.put(method.get("name"), new Type(method.getChild(0).get("name"), method.getChild(0).hasAttribute("array"))));
-        classDecl.getChildren(MAIN_METHOD).stream().forEach(main -> map.put(main.get("name"), new Type(main.get("ret"), main.hasAttribute("array"))));
         return map;
     }
 
@@ -54,27 +53,29 @@ public class JmmSymbolTableBuilder {
         classDecl.getChildren(METHOD_DECL).stream()
                 .forEach(method -> {
                     List<Symbol> symbols = new ArrayList<>();
-                    if (method.getChild(1).getKind().equals("Params")) {
-                        JmmNode params = method.getChild(1);
+                    if (method.getChildren().size() > 1){
+                        if (method.getChild(1).getKind().equals("Params")) {
+                            JmmNode params = method.getChild(1);
 
-                        for (var param : params.getChildren()) {
-                            symbols.add(new Symbol(new Type(param.getChild(0).get("name"), param.hasAttribute("array")), param.get("name")));
+                            for (var param : params.getChildren()) {
+                                symbols.add(new Symbol(new Type(param.getChild(0).get("name"), param.hasAttribute("array")), param.get("name")));
+                            }
                         }
+                        else symbols = Collections.emptyList();
+                        map.put(method.get("name"),symbols);
                     }
-                    else symbols = Collections.emptyList();
-                    map.put(method.get("name"),symbols);
-                });
+                    else if (method.getChildren().size() == 1){
+                        if (method.getChild(0).getKind().equals("Params")) {
+                            JmmNode params = method.getChild(1);
 
-        classDecl.getChildren(MAIN_METHOD).stream().forEach(
-                main -> {
-                        List<Symbol> m_symbols = new ArrayList<>();
-                        JmmNode m_params = main.getChild(0);
-                        for (var param: m_params.getChildren()){
-                            m_symbols.add(new Symbol(new Type(param.get("name"),param.hasAttribute("array")),"main"));
+                            for (var param : params.getChildren()) {
+                                symbols.add(new Symbol(new Type(param.getChild(0).get("name"), param.hasAttribute("array")), param.get("name")));
+                            }
                         }
-                        map.put(main.get("name"),m_symbols);
-                }
-        );
+                        else symbols = Collections.emptyList();
+                        map.put(method.get("name"),symbols);
+                    }
+                    });
         return map;
     }
 
@@ -86,7 +87,6 @@ public class JmmSymbolTableBuilder {
 
         classDecl.getChildren(METHOD_DECL).stream()
                 .forEach(method -> map.put(method.get("name"), getLocalsList(method)));
-        classDecl.getChildren(MAIN_METHOD).stream().forEach(mainMethod -> map.put(mainMethod.get("name"), getLocalsList(mainMethod)));
         return map;
     }
 
@@ -95,14 +95,8 @@ public class JmmSymbolTableBuilder {
                 .map(method -> method.get("name"))
                 .toList();
 
-        List<String> main = classDecl.getChildren(MAIN_METHOD).stream()
-                .map(mainMethod -> mainMethod.get("name"))  // Corrected the method name retrieval
-                .toList();
 
-        List<String> list = new ArrayList<>(methods);
-        list.addAll(main);
-
-        return list;
+        return methods;
     }
 
     private static List<Symbol> getLocalsList(JmmNode methodDecl) {

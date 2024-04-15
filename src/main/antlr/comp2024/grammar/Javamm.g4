@@ -67,7 +67,7 @@ classDecl locals[boolean isPublic=false]
     : (PUBLIC {$isPublic=true;})? CLASS name=ID (EXTENDS sup=ID)?
         LCURLY
         varDecl*
-        (methodDecl | mainMethod)*
+        (methodDecl)*
         RCURLY
     ;
 
@@ -85,24 +85,18 @@ type
     | name=ID (array=ARRAY | VARGS)?
     ;
 
-
-mainMethod
-    : (PUBLIC)? 'static' ret='void' name='main' LPAREN param RPAREN
-        LCURLY
-        varDecl* stmt*
-        RCURLY
-    ;
-
-
 methodDecl locals[boolean isPublic=false]
-    : (PUBLIC {$isPublic=true;})?
+    : (PUBLIC)? 'static' 'void' name='main' LPAREN param RPAREN
+              LCURLY
+              varDecl* stmt*
+              RCURLY
+    |(PUBLIC {$isPublic=true;})?
         type name=ID
         LPAREN params? RPAREN
         LCURLY
         varDecl* stmt*
         RETURN expr SEMI
         RCURLY
-
     ;
 
 params
