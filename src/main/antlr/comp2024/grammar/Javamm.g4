@@ -124,10 +124,10 @@ expr
     | NOT expr #NotExpr
     | expr op=(MUL  | DIV | REM) expr #BinaryExpr //
     | expr op=(ADD | SUB) expr #BinaryExpr //
-    | expr op=(LS | LE | GR | GE) expr #BooleanExpr
-    | expr op=(EQ | NEQ) expr #BooleanExpr
-    | expr op=AND expr #BooleanExpr
-    | expr op=OR expr #BooleanExpr
+    | expr op=(LS | LE | GR | GE) expr #BinaryExpr
+    | expr op=(EQ | NEQ) expr #BinaryExpr
+    | expr op=AND expr #BinaryExpr
+    | expr op=OR expr #BinaryExpr
     | expr LRET expr RRET #AccExpr
     | expr (DOT 'length') #LengthExpr
     | expr (DOT name=ID)* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
