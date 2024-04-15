@@ -132,6 +132,7 @@ expr
     | expr op=OR expr #BinaryExpr
     | expr LRET expr RRET #AccExpr
     | expr (DOT 'length') #LengthExpr
+    | className+=ID (DOT className+=ID)+ #ClassChainExpr
     | expr (DOT name=ID)* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
     | NEW type LRET expr RRET #NewArray
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
@@ -141,7 +142,7 @@ expr
     | value='true' #BooleanLiteral
     | value='false' #BooleanLiteral
     | name=ID #VarRefExpr //
-    | value= 'this' #ObjectLiteral
+    | value='this' #ObjectLiteral
     ;
 
 
