@@ -140,7 +140,7 @@ expr
     | value=INTEGER #IntegerLiteral //
     | value='true' #BooleanLiteral
     | value='false' #BooleanLiteral
-    | name=ID #VarName //
+    | name=ID #VarRefExpr //
     | value= 'this' #ObjectLiteral
     ;
 
