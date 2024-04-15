@@ -9,11 +9,8 @@ import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
-import javax.print.DocFlavor;
 import java.util.ArrayList;
 import java.util.List;
-
-import static pt.up.fe.comp2024.ast.Kind.IMPORT_DECL;
 
 public class ClassNotImported extends AnalysisVisitor {
 

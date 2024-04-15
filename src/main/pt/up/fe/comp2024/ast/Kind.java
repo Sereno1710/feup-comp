@@ -21,6 +21,8 @@ public enum Kind {
     IMPORT_DECL,
     CLASS_CHAIN_EXPR,
     FUNC_EXPR,
+    BOOLEAN_LITERAL,
+    OBJECT_LITERAL,
     ;
 
 
