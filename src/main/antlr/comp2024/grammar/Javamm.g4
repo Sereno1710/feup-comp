@@ -76,6 +76,8 @@ varDecl
     | type name='main' SEMI #VariableDecl
     ;
 
+
+
 type
     : name=INT array=ARRAY
     | name=INT VARGS
