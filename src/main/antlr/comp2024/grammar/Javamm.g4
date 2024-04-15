@@ -132,7 +132,7 @@ expr
     | expr op=OR expr #BinaryExpr
     | expr LRET expr RRET #AccExpr
     | expr (DOT 'length') #LengthExpr
-    | expr (DOT name=ID)* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
+    | className+=ID (DOT className+=ID)+ LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
     | NEW type LRET expr RRET #NewArray
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
     | LPAREN expr RPAREN #ParenExpr

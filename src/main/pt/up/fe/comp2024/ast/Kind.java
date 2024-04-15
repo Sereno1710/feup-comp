@@ -19,7 +19,8 @@ public enum Kind {
     INTEGER_LITERAL,
     VAR_REF_EXPR,
     IMPORT_DECL,
-    MAIN_METHOD
+    MAIN_METHOD,
+    FUNC_EXPR,
     ;
 
 
