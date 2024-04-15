@@ -10,6 +10,7 @@ import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
 import javax.print.DocFlavor;
+import java.util.ArrayList;
 import java.util.List;
 
 import static pt.up.fe.comp2024.ast.Kind.IMPORT_DECL;
@@ -17,7 +18,7 @@ import static pt.up.fe.comp2024.ast.Kind.IMPORT_DECL;
 public class ClassNotImported extends AnalysisVisitor {
 
     private String currentMethod;
-    private List<String> imports;
+    private List<String> imports = new ArrayList<>();
 
     @Override
     public void buildVisitor() {
@@ -26,15 +27,11 @@ public class ClassNotImported extends AnalysisVisitor {
         addVisit(Kind.FUNC_EXPR, this::visitFuncExpr);
     }
 
-    private Void visitImportDecl(JmmNode root, SymbolTable table) {
-        List<JmmNode> importDecls = root.getChildren(IMPORT_DECL);
-        importDecls.forEach(importDecl -> {
-            List<String> values = importDecl.getObjectAsList("value", String.class);
-            if (!values.isEmpty()) {
-                imports.add(values.get(values.size() - 1));
-            }
-        });
-        System.out.println("imports: "+imports.stream().toString());
+    private Void visitImportDecl(JmmNode importDecl, SymbolTable table) {
+        List<String> values = importDecl.getObjectAsList("value", String.class);
+        if (!values.isEmpty()) {
+            imports.add(values.get(values.size() - 1));
+        }
         return null;
     }
 
@@ -49,18 +46,18 @@ public class ClassNotImported extends AnalysisVisitor {
         // Check if there is an import with the same name as class used
         List<String> classAndFuncNames = funcExpr.getObjectAsList("className", String.class);
         List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
-        String className = String.join(".", classNames);
+        String className = classNames.get(classNames.size() - 1);
+        String classPathName = String.join(".", classNames);
 
 
         // Class is imported, return
-        System.out.println("imports: "+table.getImports().stream().toString());
-        if (table.getImports().stream()
-                .anyMatch(importDecl -> importDecl.equals(classNames))) {
+        if (imports.stream()
+                .anyMatch(importDecl -> importDecl.equals(className))) {
             return null;
         }
 
         // Create error report
-        var message = String.format("Class '%s' was not imported.", className);
+        var message = String.format("Class '%s' was not imported.", classPathName);
         addReport(Report.newError(
                 Stage.SEMANTIC,
                 NodeUtils.getLine(funcExpr),
