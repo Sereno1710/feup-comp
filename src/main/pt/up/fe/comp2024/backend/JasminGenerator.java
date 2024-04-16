@@ -23,13 +23,12 @@ public class JasminGenerator {
     private static final String TAB = "   ";
 
     private final OllirResult ollirResult;
-
     List<Report> reports;
 
     String code;
 
     Method currentMethod;
-
+    ClassUnit classUnit;
     private final FunctionClassMap<TreeNode, String> generators;
 
     public JasminGenerator(OllirResult ollirResult) {
@@ -48,6 +47,9 @@ public class JasminGenerator {
         generators.put(Operand.class, this::generateOperand);
         generators.put(BinaryOpInstruction.class, this::generateBinaryOp);
         generators.put(ReturnInstruction.class, this::generateReturn);
+        generators.put(PutFieldInstruction.class, this::generatePutField);
+        generators.put(GetFieldInstruction.class, this::generateGetField);
+        generators.put(CallInstruction.class, this::generateCallInstruction);
     }
 
     public List<Report> getReports() {
@@ -60,7 +62,7 @@ public class JasminGenerator {
         if (code == null) {
             code = generators.apply(ollirResult.getOllirClass());
         }
-
+        
         return code;
     }
 
@@ -68,14 +70,22 @@ public class JasminGenerator {
     private String generateClassUnit(ClassUnit classUnit) {
 
         var code = new StringBuilder();
-
+        classUnit = classUnit;
         // generate class name
         var className = ollirResult.getOllirClass().getClassName();
-        code.append(".class ").append(className).append(NL).append(NL);
+        code.append(".class ").append(className).append(NL);
 
         // TODO: Hardcoded to Object, needs to be expanded
         code.append(".super java/lang/Object").append(NL);
-
+        var fieldsList = ollirResult.getOllirClass().getFields();
+        for(var field: fieldsList){
+            var field_txt="";
+            if(field.getFieldAccessModifier() != AccessModifier.DEFAULT){
+                field_txt = field.getFieldAccessModifier().name().toLowerCase()+ field.getFieldName() + " ";
+            }
+            else field_txt= "public "+ field.getFieldName() + " ";
+            code.append(".field ").append(field_txt).append(transformType(field.getFieldType())).append(NL);
+        }
         // generate a single constructor method
         var defaultConstructor = """
                 ;default constructor
@@ -96,10 +106,10 @@ public class JasminGenerator {
             if (method.isConstructMethod()) {
                 continue;
             }
-
+            
             code.append(generators.apply(method));
         }
-
+        classUnit= null;
         return code.toString();
     }
 
@@ -117,9 +127,33 @@ public class JasminGenerator {
                 "";
 
         var methodName = method.getMethodName();
-
+        var methodType = method.getReturnType();
         // TODO: Hardcoded param types and return type, needs to be expanded
-        code.append("\n.method ").append(modifier).append(methodName).append("(I)I").append(NL);
+        var methodParameters = method.getParams();
+        var params="";
+        for(var param: methodParameters){
+            var par="";
+            if(param.getType().getTypeOfElement().toString().equals("ARRAYREF")){
+                    par+="["+ transformType(param.getType());
+
+            }
+            else if(param.getType().getTypeOfElement().toString().equals("INT32")){
+                par+="I";
+            }
+            else if(param.getType().getTypeOfElement().toString().equals("BOOLEAN")) {
+                par += "Z";
+            }
+            else{
+                par += transformType(param.getType());
+            }
+            params+=par;
+        }
+        var static_m="";
+        if(method.isStaticMethod()){
+            static_m="static ";
+        }
+
+        code.append("\n."+(method.isFinalMethod()? "final method" :"method ")).append(modifier).append(static_m).append(methodName).append("(").append(params).append(")").append(transformType(methodType)).append(NL);
 
         // Add limits
         code.append(TAB).append(".limit stack 99").append(NL);
@@ -140,6 +174,21 @@ public class JasminGenerator {
         return code.toString();
     }
 
+    private String transformType(Type methodType) {
+        if(methodType.toString().matches("INT32")){
+            return "I";
+        }
+        else if(methodType.toString().matches("BOOLEAN")){
+            return "Z";
+        }
+        else if(methodType.toString().matches("VOID")){
+            return "V";
+        } else if (methodType.toString().contains("STRING")){
+           return "Ljava/lang/String;";
+        }
+        return methodType.toString();
+    }
+
     private String generateAssign(AssignInstruction assign) {
         var code = new StringBuilder();
 
@@ -157,9 +206,11 @@ public class JasminGenerator {
 
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
-
         // TODO: Hardcoded for int type, needs to be expanded
-        code.append("istore ").append(reg).append(NL);
+        if(operand.getType().getTypeOfElement().toString().equals("OBJECTREF")){
+            code.append("astore ").append(reg).append(NL);
+        }
+        else code.append("istore ").append(reg).append(NL);
 
         return code.toString();
     }
@@ -175,7 +226,9 @@ public class JasminGenerator {
     private String generateOperand(Operand operand) {
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
-        return "iload " + reg + NL;
+        if(operand.getName().equals("this"))
+            return "aload_" + reg +NL;
+        return "iload_" + reg + NL;
     }
 
     private String generateBinaryOp(BinaryOpInstruction binaryOp) {
@@ -189,6 +242,10 @@ public class JasminGenerator {
         var op = switch (binaryOp.getOperation().getOpType()) {
             case ADD -> "iadd";
             case MUL -> "imul";
+            case DIV -> "idiv";
+            case SUB -> "isub";
+            case EQ -> "ifeq";
+            case OR -> "ifor";
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
         };
 
@@ -196,16 +253,69 @@ public class JasminGenerator {
 
         return code.toString();
     }
-
-    private String generateReturn(ReturnInstruction returnInst) {
+    private String generatePutField(PutFieldInstruction putField) {
         var code = new StringBuilder();
 
-        // TODO: Hardcoded to int return type, needs to be expanded
+        // Generate code for loading the object reference
+        code.append(generators.apply(putField.getObject()));
 
-        code.append(generators.apply(returnInst.getOperand()));
-        code.append("ireturn").append(NL);
+        // Generate code for loading the value to be stored in the field
+        code.append(generators.apply(putField.getValue()));
+
+        // Generate putfield instruction
+        var className = this.ollirResult.getOllirClass().getClassName();
+        var fieldName = putField.getField().getName();
+        var fieldType = transformType(putField.getField().getType());
+        code.append("putfield ").append(className).append("/").append(fieldName).append(" ").append(fieldType).append(NL);
 
         return code.toString();
     }
 
+    private String generateGetField(GetFieldInstruction getField) {
+        var code = new StringBuilder();
+
+        // Generate code for loading the object reference
+        code.append(generators.apply(getField.getObject()));
+
+        // Generate getfield instruction
+        var className = this.ollirResult.getOllirClass().getClassName();
+        var fieldName = getField.getField().getName();
+        var fieldType = transformType(getField.getField().getType());
+        code.append("getfield ").append(className).append("/").append(fieldName).append(" ").append(fieldType).append(NL);
+
+        // Optionally, you may need to store the retrieved value in a local variable if it's going to be used later
+
+        return code.toString();
+    }
+    private String generateReturn(ReturnInstruction returnInst) {
+        var code = new StringBuilder();
+
+        // TODO: Hardcoded to int return type, needs to be expanded
+        if(returnInst.getOperand() == null){
+            code.append("return").append(NL);
+        }
+        else {
+            code.append(generators.apply(returnInst.getOperand()));
+            code.append("ireturn").append(NL);
+        }
+        return code.toString();
+    }
+    private String generateCallInstruction(CallInstruction callInstruction) {
+        var code = new StringBuilder();
+        var type = callInstruction.getInvocationType().toString();
+        var methodName = callInstruction.getCaller().getType().toString().split("\\(")[1].replace(")","");
+
+        if (type.equals("NEW")) {
+            // For NEW invocation types, generate new and dup instructions
+            code.append("new ").append(methodName).append(NL);
+            code.append("dup").append(NL);
+
+        } else {
+            var methodName2 = callInstruction.getMethodName().toString().split(":")[1].split("\\.")[0].replace("\"","").replace(" ","");
+            // For other invocation types, generate the appropriate instruction with the method signature
+            code.append(type).append(" ").append(methodName).append("/").append(methodName2).append("()V").append(NL);
+        }
+
+        return code.toString();
+    }
 }
