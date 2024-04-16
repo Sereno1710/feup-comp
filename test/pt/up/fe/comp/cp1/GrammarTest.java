@@ -26,7 +26,7 @@ public class GrammarTest {
 
 
     private static final String IMPORT = props.get(() -> "Import");
-    private static final String MAIN_METHOD = props.get(() -> "MainMethod");
+    private static final String MAIN_METHOD = props.get(() -> "InstanceMethod");
     private static final String INSTANCE_METHOD = props.get(() -> "InstanceMethod");
     private static final String STATEMENT = props.get(() -> "Statement");
     private static final String EXPRESSION = props.get(() -> "Expression");
