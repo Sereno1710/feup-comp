@@ -20,7 +20,8 @@ public class JmmAnalysisImpl implements JmmAnalysis {
 
     public JmmAnalysisImpl() {
 
-        this.analysisPasses = List.of(new UndeclaredVariable(), new ClassNotImported(), new BinaryExprTypes(), new ArrayAccess(), new IfStatement());
+        this.analysisPasses = List.of(new UndeclaredVariable(), new ClassNotImported(), new BinaryExprTypes(),
+                new ArrayAccess(), new IfStatement(), new WhileStatement());
 
     }
 

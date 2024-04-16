@@ -30,10 +30,14 @@ public class TypeUtils {
 
         var kind = Kind.fromString(expr.getKind());
 
+
+
         Type type = switch (kind) {
             case BINARY_EXPR -> getBinExprType(expr);
             case VAR_REF_EXPR -> getVarExprType(expr, table);
+            case CLASS_CHAIN_EXPR -> getVarExprTypeFromClassChain(expr, table);
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
+            case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
         };
 
@@ -82,6 +86,30 @@ public class TypeUtils {
 
         List<Symbol> fields = table.getFields();
         type = lookForSymbolInList(fields, name);
+        return type;
+    }
+
+    private static Type getVarExprTypeFromClassChain(JmmNode expr, SymbolTable table) {
+        List<String> classAndFuncNames = expr.getObjectAsList("className", String.class);
+        List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
+        String className = classNames.get(classNames.size() - 1);
+
+        JmmNode curr = expr;
+        Type type;
+        while (curr != null) {
+            if (curr.getKind().equals(Kind.METHOD_DECL.toString())) {
+                List<Symbol> params = table.getParameters(curr.get("name"));
+                type = lookForSymbolInList(params, className);
+                if (type != null) return type;
+                List<Symbol> locals = table.getLocalVariables(curr.get("name"));
+                type = lookForSymbolInList(locals, className);
+                if (type != null) return type;
+            }
+            curr = curr.getParent();
+        }
+
+        List<Symbol> fields = table.getFields();
+        type = lookForSymbolInList(fields, className);
         return type;
     }
 

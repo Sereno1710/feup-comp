@@ -25,6 +25,7 @@ public enum Kind {
     OBJECT_LITERAL,
     ACC_EXPR,
     IF_STMT,
+    WHILE_STMT,
     ;
 
 

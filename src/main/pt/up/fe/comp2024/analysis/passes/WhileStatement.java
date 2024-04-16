@@ -10,7 +10,6 @@ import pt.up.fe.comp2024.analysis.AnalysisVisitor;
 import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.comp2024.ast.TypeUtils;
-import pt.up.fe.comp2024.symboltable.JmmSymbolTable;
 import pt.up.fe.specs.util.SpecsCheck;
 
 import java.util.ArrayList;
@@ -18,14 +17,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class IfStatement extends AnalysisVisitor {
+public class WhileStatement extends AnalysisVisitor {
 
     private String currentMethod;
 
     @Override
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
-        addVisit(Kind.IF_STMT, this::visitIfStmt);
+        addVisit(Kind.WHILE_STMT, this::visitWhileStmt);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
@@ -42,15 +41,13 @@ public class IfStatement extends AnalysisVisitor {
         return new Pair<>(true, null);
     }
 
-    private Void visitIfStmt(JmmNode ifStmt, SymbolTable table) {
+    private Void visitWhileStmt(JmmNode whileStmt, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
         // condition expression
-        JmmNode condition = ifStmt.getChild(0);
-        // if statement block
-        JmmNode ifBlock = ifStmt.getChild(1);
-        // else statement block
-        JmmNode elseBlock = ifStmt.getChild(2);
+        JmmNode condition = whileStmt.getChild(0);
+        // while body statement
+        JmmNode bodyBlock = whileStmt.getChild(1);
 
         // get binary expressions
         List<JmmNode> binExprs = new ArrayList<>(condition.getDescendants(Kind.BINARY_EXPR));
@@ -62,8 +59,8 @@ public class IfStatement extends AnalysisVisitor {
             var message = String.format("Operator '%s' is not valid for boolean expressions", pair.b);
             addReport(Report.newError(
                     Stage.SEMANTIC,
-                    NodeUtils.getLine(ifStmt),
-                    NodeUtils.getColumn(ifStmt),
+                    NodeUtils.getLine(whileStmt),
+                    NodeUtils.getColumn(whileStmt),
                     message,
                     null)
             );
@@ -82,8 +79,8 @@ public class IfStatement extends AnalysisVisitor {
                 var message = String.format("Variable '%s' is not boolean", name);
                 addReport(Report.newError(
                         Stage.SEMANTIC,
-                        NodeUtils.getLine(ifStmt),
-                        NodeUtils.getColumn(ifStmt),
+                        NodeUtils.getLine(whileStmt),
+                        NodeUtils.getColumn(whileStmt),
                         message,
                         null)
                 );
