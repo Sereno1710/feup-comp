@@ -31,8 +31,7 @@ public class ArrayAccess extends AnalysisVisitor {
 
         String name = accExpr.getChild(0).get("name");
 
-        boolean valid = true;
-        // if variable is not array, then
+        // if variable is array and , then
         if (TypeUtils.getExprType(accExpr.getChild(0), table).isArray()
                 && TypeUtils.getExprType(accExpr.getChild(1), table)
                 .equals(new Type(TypeUtils.getIntTypeName(), false))) return null;

@@ -16,7 +16,9 @@ public class TypeUtils {
     public static String getIntTypeName() {
         return INT_TYPE_NAME;
     }
-    public static String getBooleanTypeName() {return BOOLEAN_TYPE_NAME;}
+    public static String getBooleanTypeName() {
+        return BOOLEAN_TYPE_NAME;
+    }
 
     /**
      * Gets the {@link Type} of an arbitrary expression.
@@ -35,6 +37,7 @@ public class TypeUtils {
         Type type = switch (kind) {
             case BINARY_EXPR -> getBinExprType(expr);
             case VAR_REF_EXPR -> getVarExprType(expr, table);
+            case FUNC_EXPR -> getVarExprTypeFromClassChain(expr.getChild(0), table);
             case CLASS_CHAIN_EXPR -> getVarExprTypeFromClassChain(expr, table);
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
