@@ -207,10 +207,10 @@ public class JasminGenerator {
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
         // TODO: Hardcoded for int type, needs to be expanded
-        if(operand.getType().getTypeOfElement().toString().equals("OBJECTREF")){
-            code.append("astore ").append(reg).append(NL);
+        if(operand.getType().getTypeOfElement().toString().equals("INT32") | operand.getType().getTypeOfElement().toString().equals("BOOLEAN")){
+            code.append("istore ").append(reg).append(NL);
         }
-        else code.append("istore ").append(reg).append(NL);
+        else code.append("astore ").append(reg).append(NL);
 
         return code.toString();
     }
@@ -226,9 +226,9 @@ public class JasminGenerator {
     private String generateOperand(Operand operand) {
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
-        if(operand.getName().equals("this"))
-            return "aload_" + reg +NL;
-        return "iload_" + reg + NL;
+        if(operand.getType().getTypeOfElement().toString().equals("INT32") | operand.getType().getTypeOfElement().toString().equals("BOOLEAN"))
+            return "iload " + reg +NL;
+        return "aload " + reg + NL;
     }
 
     private String generateBinaryOp(BinaryOpInstruction binaryOp) {
@@ -240,12 +240,10 @@ public class JasminGenerator {
 
         // apply operation
         var op = switch (binaryOp.getOperation().getOpType()) {
-            case ADD -> "iadd";
             case MUL -> "imul";
             case DIV -> "idiv";
+            case ADD -> "iadd";
             case SUB -> "isub";
-            case EQ -> "ifeq";
-            case OR -> "ifor";
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
         };
 

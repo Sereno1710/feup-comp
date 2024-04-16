@@ -97,16 +97,19 @@ methodDecl locals[boolean isPublic=false]
         LPAREN params? RPAREN
         LCURLY
         varDecl* stmt*
-        RETURN expr SEMI
+        returnS
         RCURLY
     ;
-
 params
     : param (CMA param)*
     ;
 
 param
     : type name=ID
+    ;
+
+returnS
+    : RETURN expr SEMI #ReturnStmt
     ;
 
 stmt
