@@ -1,16 +1,22 @@
 package pt.up.fe.comp2024.ast;
 
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 
+import java.util.List;
+import java.util.Objects;
+
 public class TypeUtils {
 
     private static final String INT_TYPE_NAME = "int";
+    private static final String BOOLEAN_TYPE_NAME = "boolean";
 
     public static String getIntTypeName() {
         return INT_TYPE_NAME;
     }
+    public static String getBooleanTypeName() {return BOOLEAN_TYPE_NAME;}
 
     /**
      * Gets the {@link Type} of an arbitrary expression.
@@ -40,16 +46,43 @@ public class TypeUtils {
         String operator = binaryExpr.get("op");
 
         return switch (operator) {
-            case "+", "*" -> new Type(INT_TYPE_NAME, false);
+            case "+", "*", "-" -> new Type(INT_TYPE_NAME, false);
+            case "&&", "||", "<", ">", "<=", ">=" -> new Type(BOOLEAN_TYPE_NAME, false);
             default ->
                     throw new RuntimeException("Unknown operator '" + operator + "' of expression '" + binaryExpr + "'");
         };
     }
 
+    private static Type lookForSymbolInList(List<Symbol> list, String name) {
+        for (Symbol symbol : list) {
+            if (Objects.equals(symbol.getName(), name)) {
+                return symbol.getType();
+            }
+        }
+        return null;
+    }
 
     private static Type getVarExprType(JmmNode varRefExpr, SymbolTable table) {
         // TODO: Simple implementation that needs to be expanded
-        return new Type(INT_TYPE_NAME, false);
+        String name = varRefExpr.get("name");
+
+        JmmNode curr = varRefExpr;
+        Type type;
+        while (curr != null) {
+            if (curr.getKind().equals(Kind.METHOD_DECL.toString())) {
+                List<Symbol> params = table.getParameters(curr.get("name"));
+                type = lookForSymbolInList(params, name);
+                if (type != null) return type;
+                List<Symbol> locals = table.getLocalVariables(curr.get("name"));
+                type = lookForSymbolInList(locals, name);
+                if (type != null) return type;
+            }
+            curr = curr.getParent();
+        }
+
+        List<Symbol> fields = table.getFields();
+        type = lookForSymbolInList(fields, name);
+        return type;
     }
 
 

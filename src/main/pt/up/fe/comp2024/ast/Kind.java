@@ -23,6 +23,7 @@ public enum Kind {
     FUNC_EXPR,
     BOOLEAN_LITERAL,
     OBJECT_LITERAL,
+    ACC_EXPR,
     ;
 
 
