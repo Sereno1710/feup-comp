@@ -52,7 +52,6 @@ public class BinaryExprTypes extends AnalysisVisitor {
             if (expr.getKind().equals(Kind.VAR_REF_EXPR.toString())) {
                 type = TypeUtils.getExprType(expr, table);
             } else {
-
                 if (expr.getKind().equals(Kind.INTEGER_LITERAL.toString())) {
                     type = new Type(TypeUtils.getIntTypeName(), false);
                 } else if (expr.getKind().equals(Kind.BOOLEAN_LITERAL.toString())) {
