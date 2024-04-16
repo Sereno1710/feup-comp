@@ -9,11 +9,12 @@ import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.comp2024.analysis.AnalysisVisitor;
 import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
+import pt.up.fe.comp2024.ast.TypeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
 import java.util.Objects;
 
-public class IntPlusObject extends AnalysisVisitor {
+public class BinaryExprTypes extends AnalysisVisitor {
 
     private String currentMethod;
 
@@ -37,35 +38,50 @@ public class IntPlusObject extends AnalysisVisitor {
         // boolean that tells us whether the operation is valid
         boolean valid = true;
         // last variable and its type
-        Pair<String, String> lastVariable = new Pair<>("", "");
+        Pair<String, Type> lastVariable = new Pair<>("", null);
         String variableIfTheresError = "";
         for (var expr : expressions) {
-            String typeName;
             String name;
+            Type type;
             if (expr.hasAttribute("name")) {
                 name = expr.get("name");
             } else {
                 name = expr.get("value");
             }
-            if (expr.getKind().equals(Kind.INTEGER_LITERAL.toString())) {
-                typeName = "int";
-            } else if (expr.getKind().equals(Kind.BOOLEAN_LITERAL.toString())) {
-                typeName = "boolean";
-            } else if (expr.getKind().equals(Kind.OBJECT_LITERAL.toString())) {
-                typeName = table.getClassName();
+
+            if (expr.getKind().equals(Kind.VAR_REF_EXPR.toString())) {
+                type = TypeUtils.getExprType(expr, table);
             } else {
-                /**
-                 * FIX: not getting type for declared variables
-                 */
-                typeName = "object";
+
+                if (expr.getKind().equals(Kind.INTEGER_LITERAL.toString())) {
+                    type = new Type(TypeUtils.getIntTypeName(), false);
+                } else if (expr.getKind().equals(Kind.BOOLEAN_LITERAL.toString())) {
+                    type = new Type(TypeUtils.getBooleanTypeName(), false);
+                } else {
+                    type = null;
+                }
+            }
+            // if expression is array, operation is invalid
+            if (Objects.requireNonNull(type).isArray()) {
+                // Create error report
+                var message = String.format("Invalid operation: variable '%s' is an array.", name);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+
+                return null;
             }
             // different types in the expressions, will create error report
-            if (!Objects.equals(lastVariable.a, "") && !Objects.equals(typeName, lastVariable.b)) {
+            if (!Objects.equals(lastVariable.a, "") && !Objects.equals(type, lastVariable.b)) {
                 valid = false;
                 variableIfTheresError = name;
                 break;
             }
-            lastVariable = new Pair<>(name, typeName);
+            lastVariable = new Pair<>(name, type);
         }
         // if all types are the same, the operation is valid
         if (valid) return null;
