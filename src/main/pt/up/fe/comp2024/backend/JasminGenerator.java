@@ -226,9 +226,9 @@ public class JasminGenerator {
     private String generateOperand(Operand operand) {
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
-        if(operand.getType().getTypeOfElement().toString().equals("THIS") | operand.getType().getTypeOfElement().toString().equals("OBJECTREF"))
-            return "aload " + reg +NL;
-        return "iload " + reg + NL;
+        if(operand.getType().getTypeOfElement().toString().equals("INT32") | operand.getType().getTypeOfElement().toString().equals("BOOLEAN"))
+            return "iload " + reg +NL;
+        return "aload " + reg + NL;
     }
 
     private String generateBinaryOp(BinaryOpInstruction binaryOp) {
