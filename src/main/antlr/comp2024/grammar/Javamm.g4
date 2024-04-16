@@ -97,7 +97,7 @@ methodDecl locals[boolean isPublic=false]
         LPAREN params? RPAREN
         LCURLY
         varDecl* stmt*
-
+        returnS
         RCURLY
     ;
 params
@@ -106,6 +106,10 @@ params
 
 param
     : type name=ID
+    ;
+
+returnS
+    : RETURN expr SEMI #ReturnStmt
     ;
 
 stmt
@@ -117,7 +121,6 @@ stmt
     | name=ID EQUALS expr SEMI #AssignStmt //
     | name=ID LRET expr RRET EQUALS expr SEMI #AssignStmt
     | type name=ID EQUALS expr SEMI #AssignStmt
-    | RETURN expr SEMI #ReturnStmt
     ;
 
 
