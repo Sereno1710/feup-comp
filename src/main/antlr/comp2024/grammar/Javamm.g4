@@ -120,7 +120,6 @@ stmt
     | FOR LPAREN stmt expr SEMI expr RPAREN stmt #ForStmt
     | name=ID EQUALS expr SEMI #AssignStmt //
     | name=ID LRET expr RRET EQUALS expr SEMI #AssignStmt
-    | type name=ID EQUALS expr SEMI #AssignStmt
     ;
 
 
