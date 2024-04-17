@@ -24,6 +24,8 @@ public enum Kind {
     BOOLEAN_LITERAL,
     OBJECT_LITERAL,
     ACC_EXPR,
+    IF_STMT,
+    WHILE_STMT,
     ;
 
 
