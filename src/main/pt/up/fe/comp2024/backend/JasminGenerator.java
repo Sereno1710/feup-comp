@@ -152,7 +152,7 @@ public class JasminGenerator {
             static_m="static ";
         }
 
-        code.append("\n."+(method.isFinalMethod()? "final method" :"method ")).append(modifier).append(static_m).append(methodName).append("(").append(params).append(")").append(transformType(methodType)).append(NL);
+        code.append("\n.").append(method.isFinalMethod() ? "final method" : "method ").append(modifier).append(static_m).append(methodName).append("(").append(params).append(")").append(transformType(methodType)).append(NL);
 
         // Add limits
         code.append(TAB).append(".limit stack 99").append(NL);
@@ -301,16 +301,34 @@ public class JasminGenerator {
             code.append("new ").append(methodName).append(NL);
             code.append("dup").append(NL);
 
-        } else {
-            if(op.toString().equals("THIS"))
+        } else if (type.equals("invokespecial") || type.equals("invokevirtual")){
+            if(!currentMethod.isStaticMethod())
+                code.append("aload_0").append(NL);
+            else if(op.toString().equals("THIS"))
                 code.append("aload_0").append(NL);
             StringBuilder parameters= new StringBuilder();
             for(var param: callInstruction.getArguments()){
                 parameters.append(transformType(param.getType()));
-                code.append(generators.apply(param));
             }
             var methodName2 = callInstruction.getMethodName().toString().split(":")[1].split("\\.")[0].replace("\"","").replace(" ","");
             code.append(type).append(" ").append(methodName).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
+        } else {
+            String returnType = transformType(callInstruction.getReturnType());
+            StringBuilder parameters= new StringBuilder();
+            for(var param: callInstruction.getArguments()){
+                parameters.append(transformType(param.getType()));
+            }
+            String signature = returnType + " " + parameters;
+
+            code.append("invokestatic ")
+                    .append(callInstruction.getMethodName().toString())
+                    .append("/")
+                    .append(callInstruction.getMethodName())
+                    .append("(")
+                    .append(signature)
+                    .append(")")
+                    .append(transformType(callInstruction.getReturnType()))
+                    .append(NL);
         }
 
         return code.toString();

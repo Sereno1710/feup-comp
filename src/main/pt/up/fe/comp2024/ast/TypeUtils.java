@@ -36,13 +36,9 @@ public class TypeUtils {
 
         Type type = switch (kind) {
             case BINARY_EXPR -> getBinExprType(expr);
-<<<<<<< HEAD
             case VAR_REF_EXPR , ASSIGN_STMT -> getVarExprType(expr, table);
-=======
-            case VAR_REF_EXPR -> getVarExprType(expr, table);
             case FUNC_EXPR -> getVarExprTypeFromClassChain(expr.getChild(0), table);
             case CLASS_CHAIN_EXPR -> getVarExprTypeFromClassChain(expr, table);
->>>>>>> 47edf68b30f5006b8d46f0804a24058b9b6b5c63
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
