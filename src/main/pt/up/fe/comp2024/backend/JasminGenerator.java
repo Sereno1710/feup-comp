@@ -70,21 +70,22 @@ public class JasminGenerator {
     private String generateClassUnit(ClassUnit classUnit) {
 
         var code = new StringBuilder();
-        classUnit = classUnit;
         // generate class name
-        var className = ollirResult.getOllirClass().getClassName();
+        var className = classUnit.getClassName();
         code.append(".class ").append(className).append(NL);
 
         // TODO: Hardcoded to Object, needs to be expanded
         code.append(".super java/lang/Object").append(NL);
-        var fieldsList = ollirResult.getOllirClass().getFields();
+        var fieldsList = classUnit.getFields();
         for(var field: fieldsList){
-            var field_txt="";
-            if(field.getFieldAccessModifier() != AccessModifier.DEFAULT){
-                field_txt = field.getFieldAccessModifier().name().toLowerCase()+ field.getFieldName() + " ";
+            if(field.getFieldAccessModifier()== AccessModifier.PRIVATE){
+                code.append(".field ").append("private ").append(field.getFieldName()).append(" ");
             }
-            else field_txt= "public "+ field.getFieldName() + " ";
-            code.append(".field ").append(field_txt).append(transformType(field.getFieldType())).append(NL);
+            else if(field.getFieldAccessModifier() == AccessModifier.PROTECTED){
+                code.append(".field ").append("protected ").append(field.getFieldName()).append(" ");
+            }
+            else code.append(".field ").append("public ").append(field.getFieldName()).append(" ");
+            code.append(transformType(field.getFieldType())).append(NL);
         }
         // generate a single constructor method
         var defaultConstructor = """
@@ -109,7 +110,6 @@ public class JasminGenerator {
             
             code.append(generators.apply(method));
         }
-        classUnit= null;
         return code.toString();
     }
 
@@ -135,7 +135,6 @@ public class JasminGenerator {
             var par="";
             if(param.getType().getTypeOfElement().toString().equals("ARRAYREF")){
                     par+="["+ transformType(param.getType());
-
             }
             else if(param.getType().getTypeOfElement().toString().equals("INT32")){
                 par+="I";
@@ -254,13 +253,10 @@ public class JasminGenerator {
     private String generatePutField(PutFieldInstruction putField) {
         var code = new StringBuilder();
 
-        // Generate code for loading the object reference
         code.append(generators.apply(putField.getObject()));
 
-        // Generate code for loading the value to be stored in the field
         code.append(generators.apply(putField.getValue()));
 
-        // Generate putfield instruction
         var className = this.ollirResult.getOllirClass().getClassName();
         var fieldName = putField.getField().getName();
         var fieldType = transformType(putField.getField().getType());
@@ -272,16 +268,14 @@ public class JasminGenerator {
     private String generateGetField(GetFieldInstruction getField) {
         var code = new StringBuilder();
 
-        // Generate code for loading the object reference
+
         code.append(generators.apply(getField.getObject()));
 
-        // Generate getfield instruction
         var className = this.ollirResult.getOllirClass().getClassName();
         var fieldName = getField.getField().getName();
         var fieldType = transformType(getField.getField().getType());
         code.append("getfield ").append(className).append("/").append(fieldName).append(" ").append(fieldType).append(NL);
 
-        // Optionally, you may need to store the retrieved value in a local variable if it's going to be used later
 
         return code.toString();
     }
@@ -302,16 +296,21 @@ public class JasminGenerator {
         var code = new StringBuilder();
         var type = callInstruction.getInvocationType().toString();
         var methodName = callInstruction.getCaller().getType().toString().split("\\(")[1].replace(")","");
-
+        var op= callInstruction.getCaller().getType().getTypeOfElement();
         if (type.equals("NEW")) {
-            // For NEW invocation types, generate new and dup instructions
             code.append("new ").append(methodName).append(NL);
             code.append("dup").append(NL);
 
         } else {
+            if(op.toString().equals("THIS"))
+                code.append("aload_0").append(NL);
+            StringBuilder parameters= new StringBuilder();
+            for(var param: callInstruction.getArguments()){
+                parameters.append(transformType(param.getType()));
+                code.append(generators.apply(param));
+            }
             var methodName2 = callInstruction.getMethodName().toString().split(":")[1].split("\\.")[0].replace("\"","").replace(" ","");
-            // For other invocation types, generate the appropriate instruction with the method signature
-            code.append(type).append(" ").append(methodName).append("/").append(methodName2).append("()V").append(NL);
+            code.append(type).append(" ").append(methodName).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
         }
 
         return code.toString();
