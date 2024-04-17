@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Objects;
 
 
-public class Methods extends AnalysisVisitor {
+public class MethodCalls extends AnalysisVisitor {
 
     private String currentMethod;
     private List<String> imports = new ArrayList<>();

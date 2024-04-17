@@ -5,6 +5,7 @@ import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 
+import javax.lang.model.element.TypeElement;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,7 +38,7 @@ public class TypeUtils {
         Type type = switch (kind) {
             case BINARY_EXPR -> getBinExprType(expr);
             case VAR_REF_EXPR , ASSIGN_STMT -> getVarExprType(expr, table);
-            case FUNC_EXPR -> getVarExprTypeFromClassChain(expr.getChild(0), table);
+            case FUNC_EXPR -> getVarExprTypeFromFuncExpr(expr, table);
             case CLASS_CHAIN_EXPR -> getVarExprTypeFromClassChain(expr, table);
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
@@ -116,6 +117,38 @@ public class TypeUtils {
         return type;
     }
 
+    private static Type getVarExprTypeFromFuncExpr(JmmNode expr, SymbolTable table) {
+        String methodName;
+        String className = "";
+        if (expr.hasAttribute("name")) methodName = expr.get("name");
+        else {
+            List<String> classNames = expr.getChild(0).getObjectAsList("className", String.class);
+            methodName = classNames.get(1);
+            className = classNames.get(0);
+        }
+
+        // if method is not defined in this file, return type
+        if (!table.getMethods().contains(methodName)) {
+            if (!Objects.equals(className, "") && !Objects.equals(table.getClassName(), className)) {
+                Type type = new Type("", false);
+                type.putObject("accept", true);
+                return type;
+            }
+        }
+
+        JmmNode root = expr;
+        while (!root.getKind().equals(Kind.CLASS_DECL.toString())) {
+            root = root.getParent();
+        }
+        List<JmmNode> methods = root.getChildren(Kind.METHOD_DECL);
+        for (JmmNode method : methods) {
+            if (Objects.equals(method.get("name"), methodName)) {
+                return getTypeFromString(method.getChild(0).get("name"));
+            }
+        }
+        return null;
+    }
+
 
     /**
      * @param sourceType
@@ -125,5 +158,26 @@ public class TypeUtils {
     public static boolean areTypesAssignable(Type sourceType, Type destinationType) {
         // TODO: Simple implementation that needs to be expanded
         return sourceType.getName().equals(destinationType.getName());
+    }
+
+    public static Type getTypeFromString(String typeString) {
+        switch (typeString) {
+            case INT_TYPE_NAME -> {
+                return new Type(INT_TYPE_NAME, false);
+            }
+            case "int[]" -> {
+                return new Type(INT_TYPE_NAME, true);
+            }
+            case BOOLEAN_TYPE_NAME -> {
+                return new Type(BOOLEAN_TYPE_NAME, false);
+            }
+            case "boolean[]" -> {
+                return new Type(BOOLEAN_TYPE_NAME, true);
+            }
+            default -> {
+                if (typeString.endsWith("[]")) return new Type(typeString.substring(0, typeString.length() - 2), true);
+                return new Type(typeString, false);
+            }
+        }
     }
 }
