@@ -62,6 +62,7 @@ public class MethodCalls extends AnalysisVisitor {
         if (type != null) {
             if (imports.contains(type.getName())) return true;
         }
+        if (imports.contains(classNameList.get(0))) return true;
 
         // Create error report
         var message = String.format("Method '%s' is undeclared", methodName);
@@ -108,8 +109,9 @@ public class MethodCalls extends AnalysisVisitor {
             parameterTypes.add(symbol.getType());
         }
 
-        // if the number of parameters is wrong
-        if (parameterNodes.size() != parameterTypes.size()) {
+        boolean hasVarargs = parameterTypes.get(parameterTypes.size() - 1).hasAttribute("vargs");
+        // if the number of parameters is wrong, if no parameter is varargs
+        if (!hasVarargs && parameterNodes.size() != parameterTypes.size()) {
             // Create error report
             var message = String.format("Method '%s' was called with the wrong number of parameters", methodName);
             addReport(Report.newError(
