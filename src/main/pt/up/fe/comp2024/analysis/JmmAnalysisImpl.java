@@ -8,6 +8,7 @@ import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.comp2024.analysis.passes.*;
+import pt.up.fe.comp2024.analysis.passes.Class;
 import pt.up.fe.comp2024.symboltable.JmmSymbolTableBuilder;
 
 import java.util.ArrayList;
@@ -20,8 +21,9 @@ public class JmmAnalysisImpl implements JmmAnalysis {
 
     public JmmAnalysisImpl() {
 
-        this.analysisPasses = List.of(new UndeclaredVariable(), new ClassNotImported(), new BinaryExprTypes(),
-                new ArrayAccess(), new IfStatement(), new WhileStatement(), new MethodCalls(), new ReturnType());
+        this.analysisPasses = List.of(new Variable(), new Class(), new BinaryExprTypes(),
+                new ArrayAccess(), new IfStatement(), new WhileStatement(), new MethodCalls(), new ReturnType(),
+                new Assignment());
 
     }
 

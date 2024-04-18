@@ -11,15 +11,14 @@ import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.comp2024.ast.TypeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
-
-public class ReturnType extends AnalysisVisitor {
+public class Assignment extends AnalysisVisitor {
 
     private String currentMethod;
 
     @Override
-    public void buildVisitor() {
-        addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
-        addVisit(Kind.RETURN_STMT, this::visitReturnStmt);
+    protected void buildVisitor() {
+        addVisit(Kind.METHOD_DECL,this::visitMethodDecl);
+        addVisit(Kind.ASSIGN_STMT,this::visitAssignStmt);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
@@ -27,25 +26,24 @@ public class ReturnType extends AnalysisVisitor {
         return null;
     }
 
-    private Void visitReturnStmt(JmmNode returnStmt, SymbolTable table) {
+    private Void visitAssignStmt(JmmNode assignStmt, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        // if return types are correct
-        if (table.getReturnType(returnStmt.getParent().get("name"))
-                .equals(TypeUtils.getExprType(returnStmt.getChild(0), table)))
-            return null;
+        String varName = assignStmt.get("name");
+        Type left = TypeUtils.getTypeFromString(varName, assignStmt, table);
+        Type right = TypeUtils.getExprType(assignStmt.getChild(0), table);
 
-        // Create error report
-        var message = String.format("Return statement has wrong type in method '%s'", returnStmt.getParent().get("name"));
+        if (left != null && right != null
+                && TypeUtils.areTypesAssignable(left, right, table)) return null;
+
+        var message = String.format("Variable '%s' is assigned to invalid value.", varName);
         addReport(Report.newError(
                 Stage.SEMANTIC,
-                NodeUtils.getLine(returnStmt),
-                NodeUtils.getColumn(returnStmt),
+                NodeUtils.getLine(assignStmt),
+                NodeUtils.getColumn(assignStmt),
                 message,
                 null)
         );
         return null;
     }
-
-
 }

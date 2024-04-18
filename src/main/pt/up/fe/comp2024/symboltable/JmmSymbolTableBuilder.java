@@ -41,7 +41,11 @@ public class JmmSymbolTableBuilder {
         Map<String, Type> map = new HashMap<>();
 
         classDecl.getChildren(METHOD_DECL).stream()
-                .forEach(method -> map.put(method.get("name"), new Type(method.getChild(0).get("name"), method.getChild(0).hasAttribute("array"))));
+                .forEach(method -> {
+                    Type type = new Type(method.getChild(0).get("name"), method.getChild(0).hasAttribute("array"));
+                    if (method.getChild(0).hasAttribute("vargs")) type.putObject("vargs", true);
+                    map.put(method.get("name"), type);
+                });
         return map;
     }
 
@@ -58,7 +62,9 @@ public class JmmSymbolTableBuilder {
                             JmmNode params = method.getChild(1);
 
                             for (var param : params.getChildren()) {
-                                symbols.add(new Symbol(new Type(param.getChild(0).get("name"), param.hasAttribute("array")), param.get("name")));
+                                Type type = new Type(param.getChild(0).get("name"), param.hasAttribute("array"));
+                                if (param.getChild(0).hasAttribute("vargs")) type.putObject("vargs", true);
+                                symbols.add(new Symbol(type, param.get("name")));
                             }
                         }
                         else symbols = Collections.emptyList();
@@ -69,7 +75,9 @@ public class JmmSymbolTableBuilder {
                             JmmNode params = method.getChild(1);
 
                             for (var param : params.getChildren()) {
-                                symbols.add(new Symbol(new Type(param.getChild(0).get("name"), param.hasAttribute("array")), param.get("name")));
+                                Type type = new Type(param.getChild(0).get("name"), param.hasAttribute("array"));
+                                if (param.getChild(0).hasAttribute("vargs")) type.putObject("vargs", true);
+                                symbols.add(new Symbol(type, param.get("name")));
                             }
                         }
                         else symbols = Collections.emptyList();
@@ -100,13 +108,14 @@ public class JmmSymbolTableBuilder {
     }
 
     private static List<Symbol> getLocalsList(JmmNode methodDecl) {
-        // TODO: Simple implementation that needs to be expanded
         return methodDecl.getChildren(VAR_DECL).stream()
                 .map(varDecl -> {
                     String typeName = varDecl.getChild(0).get("name"); // Assuming type is the first child
                     boolean isArray = varDecl.getChild(0).hasAttribute("array");
+                    Type type = new Type(typeName, isArray);
+                    if (varDecl.getChild(0).hasAttribute("vargs")) type.putObject("vargs", true);
                     String fieldName = varDecl.get("name");
-                    return new Symbol(new Type(typeName, isArray), fieldName);
+                    return new Symbol(type, fieldName);
                 })
                 .collect(Collectors.toList());
     }
@@ -123,8 +132,10 @@ public class JmmSymbolTableBuilder {
                 .map(varDecl -> {
                     String typeName = varDecl.getChild(0).get("name"); // Assuming type is the first child
                     boolean isArray = varDecl.getChild(0).hasAttribute("array");
+                    Type type = new Type(typeName, isArray);
+                    if (varDecl.getChild(0).hasAttribute("vargs")) type.putObject("vargs", true);
                     String fieldName = varDecl.get("name");
-                    return new Symbol(new Type(typeName, isArray), fieldName);
+                    return new Symbol(type, fieldName);
                 })
                 .collect(Collectors.toList());
     }
