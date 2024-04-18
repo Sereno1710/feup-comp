@@ -58,9 +58,9 @@ public class MethodCalls extends AnalysisVisitor {
         if (imports.contains(extendedClass)) return true;
 
         // if class is imported
-        Type type = TypeUtils.getExprType(funcExpr, table);
+        Type type = TypeUtils.getExprType(funcExpr.getChild(0), table);
         if (type != null) {
-            if (imports.contains(TypeUtils.getExprType(funcExpr, table).getName())) return true;
+            if (imports.contains(type.getName())) return true;
         }
 
         // Create error report

@@ -40,6 +40,7 @@ public class TypeUtils {
             case VAR_REF_EXPR , ASSIGN_STMT -> getVarExprType(expr, table);
             case FUNC_EXPR -> getVarExprTypeFromFuncExpr(expr, table);
             case CLASS_CHAIN_EXPR -> getVarExprTypeFromClassChain(expr, table);
+            case ACC_EXPR -> getArrayAccessExprType(expr, table);
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
@@ -147,6 +148,12 @@ public class TypeUtils {
             }
         }
         return null;
+    }
+
+    private static Type getArrayAccessExprType(JmmNode accExpr, SymbolTable table) {
+        JmmNode arrayVarNode = accExpr.getChild(0);
+        Type arrayType = getVarExprType(arrayVarNode, table);
+        return new Type(arrayType.getName(), false);
     }
 
 

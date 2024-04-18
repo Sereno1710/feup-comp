@@ -28,7 +28,7 @@ public class ReturnType extends AnalysisVisitor {
 
     private Void visitReturnStmt(JmmNode returnStmt, SymbolTable table) {
         // if return types are correct
-        if (TypeUtils.getTypeFromString(returnStmt.getParent().getChild(0).get("name"))
+        if (table.getReturnType(returnStmt.getParent().get("name"))
                 .equals(TypeUtils.getExprType(returnStmt.getChild(0), table)))
             return null;
 
