@@ -56,7 +56,7 @@ public class Class extends AnalysisVisitor {
             return null;
         }
 
-        Type type = TypeUtils.getExprType(classChainExpr, table);
+        Type type = TypeUtils.getClassFromClassChain(classChainExpr, table);
         // if var is not initiated
         if (type == null) {
             // Create error report

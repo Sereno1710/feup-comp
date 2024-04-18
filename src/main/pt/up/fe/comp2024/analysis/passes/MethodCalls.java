@@ -46,7 +46,8 @@ public class MethodCalls extends AnalysisVisitor {
     private boolean checkMethodExists(JmmNode funcExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        List<String> classNameList = funcExpr.getChild(0).getObjectAsList("className", String.class);
+        List<JmmNode> classChainExprs = funcExpr.getDescendants(Kind.CLASS_CHAIN_EXPR);
+        List<String> classNameList = classChainExprs.get(0).getObjectAsList("className", String.class);
         String methodName = classNameList.get(classNameList.size() - 1);
 
         List<String> methods = table.getMethods();
@@ -58,7 +59,7 @@ public class MethodCalls extends AnalysisVisitor {
         if (imports.contains(extendedClass)) return true;
 
         // if class is imported
-        Type type = TypeUtils.getExprType(funcExpr.getChild(0), table);
+        Type type = TypeUtils.getClassFromClassChain(funcExpr.getChild(0), table);
         if (type != null) {
             if (imports.contains(type.getName())) return true;
         }
@@ -104,6 +105,7 @@ public class MethodCalls extends AnalysisVisitor {
         }
 
         List<Symbol> symbols = table.getParameters(methodName);
+        if (symbols.isEmpty()) return;
         List<Type> parameterTypes = new ArrayList<>();
         for (Symbol symbol : symbols) {
             parameterTypes.add(symbol.getType());

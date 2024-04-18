@@ -101,7 +101,7 @@ public class TypeUtils {
         return type;
     }
 
-    private static Type getVarExprTypeFromClassChain(JmmNode expr, SymbolTable table) {
+    public static Type getClassFromClassChain(JmmNode expr, SymbolTable table) {
         List<String> classAndFuncNames = expr.getObjectAsList("className", String.class);
         List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
         String className = classNames.get(classNames.size() - 1);
@@ -128,12 +128,20 @@ public class TypeUtils {
         return type;
     }
 
+    private static Type getVarExprTypeFromClassChain(JmmNode expr, SymbolTable table) {
+        List<String> classAndFuncNames = expr.getObjectAsList("className", String.class);
+        String methodName = classAndFuncNames.get(classAndFuncNames.size() - 1);
+
+        return table.getReturnType(methodName);
+    }
+
     private static Type getVarExprTypeFromFuncExpr(JmmNode expr, SymbolTable table) {
-        String methodName;
+        String methodName = "";
         String className = "";
         if (expr.hasAttribute("name")) methodName = expr.get("name");
         else {
-            List<String> classNames = expr.getChild(0).getObjectAsList("className", String.class);
+            List<JmmNode> classChainExprs = expr.getDescendants(Kind.CLASS_CHAIN_EXPR);
+            List<String> classNames = classChainExprs.get(0).getObjectAsList("className", String.class);
             methodName = classNames.get(1);
             className = classNames.get(0);
         }
