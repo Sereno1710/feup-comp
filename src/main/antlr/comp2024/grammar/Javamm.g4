@@ -87,8 +87,8 @@ type
     | name=ID (array=ARRAY | VARGS)?
     ;
 
-methodDecl locals[boolean isPublic=false]
-    : (PUBLIC)? 'static' 'void' name='main' LPAREN param RPAREN
+methodDecl locals[boolean isPublic=false, boolean isStatic=false]
+    : (PUBLIC {$isPublic=true;})? ('static' {$isStatic=true;})? type name='main' LPAREN param RPAREN
               LCURLY
               varDecl* stmt*
               RCURLY

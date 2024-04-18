@@ -7,6 +7,8 @@ import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.comp2024.ast.TypeUtils;
 
+import java.util.Objects;
+
 import static pt.up.fe.comp2024.ast.Kind.*;
 
 /**
@@ -36,8 +38,10 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
     protected void buildVisitor() {
 
         addVisit(PROGRAM, this::visitProgram);
+        addVisit(IMPORT_DECL, this::visitImportDecl);
         addVisit(CLASS_DECL, this::visitClass);
         addVisit(METHOD_DECL, this::visitMethodDecl);
+        addVisit(VAR_DECL, this::visitVarDecl);
         addVisit(PARAM, this::visitParam);
         addVisit(RETURN_STMT, this::visitReturn);
         addVisit(ASSIGN_STMT, this::visitAssignStmt);
@@ -45,25 +49,52 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         setDefaultVisit(this::defaultVisit);
     }
 
-
-    private String visitAssignStmt(JmmNode node, Void unused) {
-
-        var lhs = exprVisitor.visit(node.getJmmChild(0));
-        var rhs = exprVisitor.visit(node.getJmmChild(1));
+    private String visitVarDecl(JmmNode node, Void unused) {
+        String name = node.get("name");
+        String typeCode = OptUtils.toOllirType(node.getJmmChild(0));
+        String parent = node.getParent().getKind();
 
         StringBuilder code = new StringBuilder();
 
-        // code to compute the children
-        code.append(lhs.getComputation());
+        if (Objects.equals(parent, "ClassDecl")) {
+            code.append(".field public ");
+            code.append(name);
+            code.append(typeCode);
+            code.append(END_STMT);
+        }
+
+        return code.toString();
+    }
+
+    private String visitImportDecl(JmmNode node, Void unused) {
+        String name = node.get("ID");
+
+        StringBuilder code = new StringBuilder();
+
+
+        code.append("import ");
+        code.append(name);
+        code.append(END_STMT);
+
+        return code.toString();
+    }
+
+
+    private String visitAssignStmt(JmmNode node, Void unused) {
+
+        var lhs = node.get("name");
+        var rhs = exprVisitor.visit(node.getJmmChild(0));
+
+        StringBuilder code = new StringBuilder();
+
         code.append(rhs.getComputation());
 
-        // code to compute self
-        // statement has type of lhs
-        Type thisType = TypeUtils.getExprType(node.getJmmChild(0), table);
+        Type thisType = TypeUtils.getExprType(node, table);
         String typeString = OptUtils.toOllirType(thisType);
 
 
-        code.append(lhs.getCode());
+        code.append(lhs);
+        code.append(typeString);
         code.append(SPACE);
 
         code.append(ASSIGN);
@@ -121,8 +152,14 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
 
         boolean isPublic = NodeUtils.getBooleanAttribute(node, "isPublic", "false");
 
+        boolean isStatic = NodeUtils.getBooleanAttribute(node, "isStatic", "false");
+
         if (isPublic) {
             code.append("public ");
+        }
+
+        if (isStatic) {
+            code.append("static ");
         }
 
         // name
@@ -130,8 +167,13 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         code.append(name);
 
         // param
-        var paramCode = visit(node.getJmmChild(1));
-        code.append("(" + paramCode + ")");
+
+        if(Objects.equals(name, "main")) {
+            code.append("(args.array.String)");
+        } else {
+            var paramCode = visit(node.getJmmChild(1));
+            code.append("(").append(paramCode).append(")");
+        }
 
         // type
         var retType = OptUtils.toOllirType(node.getJmmChild(0));
@@ -147,6 +189,11 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
             code.append(childCode);
         }
 
+        if(Objects.equals(name, "main")) {
+            code.append("ret.V");
+            code.append(END_STMT);
+        }
+
         code.append(R_BRACKET);
         code.append(NL);
 
@@ -159,6 +206,13 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         StringBuilder code = new StringBuilder();
 
         code.append(table.getClassName());
+        String superClass = table.getSuper();
+        if (!superClass.isEmpty()) {
+            code.append(" extends ").append(superClass);
+        } else {
+            code.append(" extends Object");
+        }
+
         code.append(L_BRACKET);
 
         code.append(NL);
