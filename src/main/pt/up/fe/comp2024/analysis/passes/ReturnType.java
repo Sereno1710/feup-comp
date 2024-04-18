@@ -9,6 +9,7 @@ import pt.up.fe.comp2024.analysis.AnalysisVisitor;
 import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.comp2024.ast.TypeUtils;
+import pt.up.fe.specs.util.SpecsCheck;
 
 
 public class ReturnType extends AnalysisVisitor {
@@ -27,6 +28,8 @@ public class ReturnType extends AnalysisVisitor {
     }
 
     private Void visitReturnStmt(JmmNode returnStmt, SymbolTable table) {
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
+
         // if return types are correct
         if (table.getReturnType(returnStmt.getParent().get("name"))
                 .equals(TypeUtils.getExprType(returnStmt.getChild(0), table)))

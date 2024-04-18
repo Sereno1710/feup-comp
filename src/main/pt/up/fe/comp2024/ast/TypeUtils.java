@@ -13,12 +13,16 @@ public class TypeUtils {
 
     private static final String INT_TYPE_NAME = "int";
     private static final String BOOLEAN_TYPE_NAME = "boolean";
+    private static final String STRING_TYPE_NAME = "String";
 
     public static String getIntTypeName() {
         return INT_TYPE_NAME;
     }
     public static String getBooleanTypeName() {
         return BOOLEAN_TYPE_NAME;
+    }
+    public static String getStringTypeName() {
+        return STRING_TYPE_NAME;
     }
 
     /**
@@ -37,10 +41,13 @@ public class TypeUtils {
 
         Type type = switch (kind) {
             case BINARY_EXPR -> getBinExprType(expr);
-            case VAR_REF_EXPR , ASSIGN_STMT -> getVarExprType(expr, table);
+            case VAR_REF_EXPR -> getVarExprType(expr, table);
+            case NEW_CLASS_EXPR -> getTypeFromString(expr.getParent().get("name"), expr, table);
             case FUNC_EXPR -> getVarExprTypeFromFuncExpr(expr, table);
             case CLASS_CHAIN_EXPR -> getVarExprTypeFromClassChain(expr, table);
             case ACC_EXPR -> getArrayAccessExprType(expr, table);
+            case NEW_ARRAY -> getNewArrayType(expr);
+            case ARRAY_EXPR -> getArrayExprType(expr, table);
             case INTEGER_LITERAL -> new Type(INT_TYPE_NAME, false);
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
@@ -56,7 +63,7 @@ public class TypeUtils {
 
         return switch (operator) {
             case "+", "*", "-" -> new Type(INT_TYPE_NAME, false);
-            case "&&", "||", "<", ">", "<=", ">=" -> new Type(BOOLEAN_TYPE_NAME, false);
+            case "&&", "||", "<", ">", "<=", ">=", "!" -> new Type(BOOLEAN_TYPE_NAME, false);
             default ->
                     throw new RuntimeException("Unknown operator '" + operator + "' of expression '" + binaryExpr + "'");
         };
@@ -72,7 +79,6 @@ public class TypeUtils {
     }
 
     private static Type getVarExprType(JmmNode varRefExpr, SymbolTable table) {
-        // TODO: Simple implementation that needs to be expanded
         String name = varRefExpr.get("name");
 
         JmmNode curr = varRefExpr;
@@ -85,6 +91,7 @@ public class TypeUtils {
                 List<Symbol> locals = table.getLocalVariables(curr.get("name"));
                 type = lookForSymbolInList(locals, name);
                 if (type != null) return type;
+                break;
             }
             curr = curr.getParent();
         }
@@ -109,6 +116,7 @@ public class TypeUtils {
                 List<Symbol> locals = table.getLocalVariables(curr.get("name"));
                 type = lookForSymbolInList(locals, className);
                 if (type != null) return type;
+                break;
             }
             curr = curr.getParent();
         }
@@ -132,7 +140,7 @@ public class TypeUtils {
         if (!table.getMethods().contains(methodName)) {
             if (!Objects.equals(className, "") && !Objects.equals(table.getClassName(), className)) {
                 Type type = new Type("", false);
-                type.putObject("accept", true);
+                type.putObject("assignable", true);
                 return type;
             }
         }
@@ -144,7 +152,7 @@ public class TypeUtils {
         List<JmmNode> methods = root.getChildren(Kind.METHOD_DECL);
         for (JmmNode method : methods) {
             if (Objects.equals(method.get("name"), methodName)) {
-                return getTypeFromString(method.getChild(0).get("name"));
+                return getTypeFromTypeString(method.getChild(0).get("name"));
             }
         }
         return null;
@@ -156,18 +164,61 @@ public class TypeUtils {
         return new Type(arrayType.getName(), false);
     }
 
+    private static Type getNewArrayType(JmmNode newArrayExpr) {
+        return new Type(getTypeFromTypeString(newArrayExpr.getChild(0).get("name")).getName(), true);
+    }
+
+    private static Type getArrayExprType(JmmNode arrayExpr, SymbolTable table) {
+        Type type = null;
+        for (JmmNode expr : arrayExpr.getChildren()) {
+            if (type == null) type = getExprType(expr, table);
+            else if (!type.equals(getExprType(expr, table))) return null;
+        }
+        assert type != null;
+        return new Type(type.getName(), true);
+    }
+
 
     /**
      * @param sourceType
      * @param destinationType
      * @return true if sourceType can be assigned to destinationType
      */
-    public static boolean areTypesAssignable(Type sourceType, Type destinationType) {
-        // TODO: Simple implementation that needs to be expanded
-        return sourceType.getName().equals(destinationType.getName());
+    public static boolean areTypesAssignable
+    (Type sourceType, Type destinationType, SymbolTable table) {
+        // if types are the same, return true
+        if (sourceType.equals(destinationType)) return true;
+
+        // if source type is file class, this class needs to extend destination type
+        if (sourceType.getName().equals(table.getClassName())) {
+            return table.getSuper().equals(destinationType.getName());
+        }
+        // if destination type is file class, this class needs to extend source type
+        if (destinationType.getName().equals(table.getClassName())) {
+            return table.getSuper().equals(sourceType.getName());
+        }
+
+        // if one member is an imported object, assume it's assignable
+        boolean object;
+        switch (sourceType.getName()) {
+            case INT_TYPE_NAME, BOOLEAN_TYPE_NAME, STRING_TYPE_NAME -> object = false;
+            default -> object = true;
+        }
+        if (object) return true;
+        switch (destinationType.getName()) {
+            case INT_TYPE_NAME, BOOLEAN_TYPE_NAME, STRING_TYPE_NAME -> object = false;
+            default -> object = true;
+        }
+        if (object) return true;
+
+        // if type to the right is assignable, return true
+        if (sourceType.getOptionalObject("assignable").isPresent()
+                || destinationType.getOptionalObject("assignable").isPresent()) return true;
+
+        return false;
     }
 
-    public static Type getTypeFromString(String typeString) {
+    public static Type getTypeFromTypeString(String typeString) {
         switch (typeString) {
             case INT_TYPE_NAME -> {
                 return new Type(INT_TYPE_NAME, false);
@@ -186,5 +237,26 @@ public class TypeUtils {
                 return new Type(typeString, false);
             }
         }
+    }
+
+    public static Type getTypeFromString(String var, JmmNode startingNode, SymbolTable table) {
+        JmmNode curr = startingNode;
+        Type type;
+        while (curr != null) {
+            if (curr.getKind().equals(Kind.METHOD_DECL.toString())) {
+                List<Symbol> params = table.getParameters(curr.get("name"));
+                type = lookForSymbolInList(params, var);
+                if (type != null) return type;
+                List<Symbol> locals = table.getLocalVariables(curr.get("name"));
+                type = lookForSymbolInList(locals, var);
+                if (type != null) return type;
+                break;
+            }
+            curr = curr.getParent();
+        }
+
+        List<Symbol> fields = table.getFields();
+        type = lookForSymbolInList(fields, var);
+        return type;
     }
 }

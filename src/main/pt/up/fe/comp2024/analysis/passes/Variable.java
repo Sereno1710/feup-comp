@@ -7,9 +7,10 @@ import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.comp2024.analysis.AnalysisVisitor;
 import pt.up.fe.comp2024.ast.Kind;
 import pt.up.fe.comp2024.ast.NodeUtils;
+import pt.up.fe.comp2024.ast.TypeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
-public class UndeclaredVariable extends AnalysisVisitor {
+public class Variable extends AnalysisVisitor {
 
     private String currentMethod;
 
@@ -17,6 +18,7 @@ public class UndeclaredVariable extends AnalysisVisitor {
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.VAR_REF_EXPR, this::visitVarRefExpr);
+        addVisit(Kind.NEW_CLASS_EXPR, this::visitNewClassExpr);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
@@ -61,5 +63,25 @@ public class UndeclaredVariable extends AnalysisVisitor {
         return null;
     }
 
+    private Void visitNewClassExpr(JmmNode newClassExpr, SymbolTable table) {
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
+        String varName = newClassExpr.getParent().get("name");
+
+        // if classes match in initializations, return
+        if (TypeUtils.getTypeFromString(varName, newClassExpr, table)
+                .equals(TypeUtils.getTypeFromTypeString(newClassExpr.get("name"))))
+            return null;
+
+        var message = String.format("Variable '%s' has an invalid initialization.", varName);
+        addReport(Report.newError(
+                Stage.SEMANTIC,
+                NodeUtils.getLine(newClassExpr),
+                NodeUtils.getColumn(newClassExpr),
+                message,
+                null)
+        );
+
+        return null;
+    }
 
 }

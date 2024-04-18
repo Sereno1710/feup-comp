@@ -26,6 +26,9 @@ public enum Kind {
     ACC_EXPR,
     IF_STMT,
     WHILE_STMT,
+    NEW_CLASS_EXPR,
+    NEW_ARRAY,
+    ARRAY_EXPR,
     ;
 
 

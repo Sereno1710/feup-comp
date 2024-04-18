@@ -14,7 +14,7 @@ import pt.up.fe.specs.util.SpecsCheck;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClassNotImported extends AnalysisVisitor {
+public class Class extends AnalysisVisitor {
 
     private String currentMethod;
     private List<String> imports = new ArrayList<>();
@@ -57,7 +57,7 @@ public class ClassNotImported extends AnalysisVisitor {
         // if var is not initiated
         if (type == null) {
             // Create error report
-            var message = String.format("Class '%s' was not imported or initiated.", className);
+            var message = String.format("Class '%s' was not imported or initialized.", className);
             addReport(Report.newError(
                     Stage.SEMANTIC,
                     NodeUtils.getLine(classChainExpr),
@@ -70,6 +70,5 @@ public class ClassNotImported extends AnalysisVisitor {
         }
         return null;
     }
-
 
 }

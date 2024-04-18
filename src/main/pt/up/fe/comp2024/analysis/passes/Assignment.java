@@ -11,14 +11,14 @@ import pt.up.fe.comp2024.ast.NodeUtils;
 import pt.up.fe.comp2024.ast.TypeUtils;
 import pt.up.fe.specs.util.SpecsCheck;
 
-public class ArrayAccess extends AnalysisVisitor {
+public class Assignment extends AnalysisVisitor {
 
     private String currentMethod;
 
     @Override
-    public void buildVisitor() {
-        addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
-        addVisit(Kind.ACC_EXPR, this::visitAccExpr);
+    protected void buildVisitor() {
+        addVisit(Kind.METHOD_DECL,this::visitMethodDecl);
+        addVisit(Kind.ASSIGN_STMT,this::visitAssignStmt);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
@@ -26,28 +26,24 @@ public class ArrayAccess extends AnalysisVisitor {
         return null;
     }
 
-    private Void visitAccExpr(JmmNode accExpr, SymbolTable table) {
+    private Void visitAssignStmt(JmmNode assignStmt, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        String name = accExpr.getChild(0).get("name");
+        String varName = assignStmt.get("name");
+        Type left = TypeUtils.getTypeFromString(varName, assignStmt, table);
+        Type right = TypeUtils.getExprType(assignStmt.getChild(0), table);
 
-        // if variable is array and expression between square brackets is int, then it's correct
-        if (TypeUtils.getExprType(accExpr.getChild(0), table).isArray()
-                && TypeUtils.getExprType(accExpr.getChild(1), table)
-                .equals(new Type(TypeUtils.getIntTypeName(), false))) return null;
+        if (left != null && right != null
+                && TypeUtils.areTypesAssignable(left, right, table)) return null;
 
-        // Create error report
-        var message = String.format("Invalid operation: '%s' is not an array.", name);
+        var message = String.format("Variable '%s' is assigned to invalid value.", varName);
         addReport(Report.newError(
                 Stage.SEMANTIC,
-                NodeUtils.getLine(accExpr),
-                NodeUtils.getColumn(accExpr),
+                NodeUtils.getLine(assignStmt),
+                NodeUtils.getColumn(assignStmt),
                 message,
                 null)
         );
-
         return null;
     }
-
-
 }

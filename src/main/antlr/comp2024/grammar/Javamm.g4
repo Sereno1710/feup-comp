@@ -139,7 +139,7 @@ expr
     | NEW type LRET expr RRET #NewArray
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
     | LPAREN expr RPAREN #ParenExpr
-    | LRET (expr (CMA expr)*)? RRET #ArrayExpr
+    | LRET expr (CMA expr)* RRET #ArrayExpr
     | value=INTEGER #IntegerLiteral //
     | value='true' #BooleanLiteral
     | value='false' #BooleanLiteral
