@@ -89,7 +89,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
 
         code.append(rhs.getComputation());
 
-        Type thisType = TypeUtils.getExprType(node, table);
+        Type thisType = TypeUtils.getTypeFromString(node.get("name"), node, table);
         String typeString = OptUtils.toOllirType(thisType);
 
 
