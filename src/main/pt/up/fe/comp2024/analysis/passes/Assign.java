@@ -44,7 +44,6 @@ public class Assign extends AnalysisVisitor {
                     a_type = new Type(TypeUtils.getBooleanTypeName(), false);
                 } else if (assign.getKind().equals(Kind.IMPORT_DECL.toString())){
 
-                    continue;
                 }
                 var message = String.format("Invalid operation: variable '%s' is not the of the type '%s'.", name, a_type.getName());
                 addReport(Report.newError(
@@ -57,9 +56,6 @@ public class Assign extends AnalysisVisitor {
                 return null;
             }
         }
-
-
-
         return null;
     }
 }

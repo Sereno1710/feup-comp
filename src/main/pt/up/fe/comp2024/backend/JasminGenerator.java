@@ -8,6 +8,7 @@ import pt.up.fe.specs.util.classmap.FunctionClassMap;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
 import pt.up.fe.specs.util.utilities.StringLines;
 
+import javax.management.OperationsException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -182,10 +183,33 @@ public class JasminGenerator {
         }
         else if(methodType.toString().matches("VOID")){
             return "V";
-        } else if (methodType.toString().contains("STRING")){
-           return "Ljava/lang/String;";
+        } else if (methodType.toString().contains("OBJECTREF")){
+            for(var imps:ollirResult.getOllirClass().getImports()){
+                if(imps.endsWith("."+methodType.toString().split("\\(")[1].replace(")",""))){
+                   return imps.replace(".","/") + ";";
+                }
+            }
+            return methodType.toString().split("\\(")[1].replace(")","");
+
+        } else if(methodType.toString().contains("STRING")){
+            return "Ljava/lang/String;";
+        } else if(methodType.getTypeOfElement().toString().equals("ARRAYREF")){
+            return transformString(methodType.toString());
         }
         return methodType.toString();
+    }
+
+    private String transformString(String string) {
+        switch (string){
+            case "INT32": return "I";
+            case "BOOLEAN": return "Z";
+            case "STRING": return "Ljava/lang/String;";
+            default:
+                if(string.contains("OBJECTREF")){
+                    return string.split("\\(")[1].replace(")","");
+                }
+                return  string;
+        }
     }
 
     private String generateAssign(AssignInstruction assign) {
@@ -219,7 +243,19 @@ public class JasminGenerator {
     }
 
     private String generateLiteral(LiteralElement literal) {
-        return "ldc " + literal.getLiteral() + NL;
+        var code=new StringBuilder();
+        if(literal.getType().getTypeOfElement().toString().equals("INT32")|| literal.getType().getTypeOfElement().toString().equals("BOOLEAN")){
+            int value = Integer.parseInt(literal.getLiteral());
+
+            if(value >= -1 && value <=5)  code.append("iconst_");
+            else if(value >= -128 && value<=127) code.append("bipush ");
+            else if(value >= -32768 && value <= 32767) code.append("sipush ");
+            else {code.append("ldc ");}
+
+            code.append(value == -1 ?  "m1" : value).append(NL);
+        }
+        else code.append("ldc ").append(literal.getLiteral()).append(NL);
+        return code.toString();
     }
 
     private String generateOperand(Operand operand) {
@@ -286,26 +322,41 @@ public class JasminGenerator {
         if(returnInst.getOperand() == null){
             code.append("return").append(NL);
         }
-        else {
+        else if(returnInst.getReturnType().toString().equals("INT32") || returnInst.getReturnType().toString().equals("BOOLEAN")){
             code.append(generators.apply(returnInst.getOperand()));
             code.append("ireturn").append(NL);
+        }
+        else {
+            code.append(generators.apply(returnInst.getOperand()));
+            code.append("areturn").append(NL);
         }
         return code.toString();
     }
     private String generateCallInstruction(CallInstruction callInstruction) {
         var code = new StringBuilder();
         var type = callInstruction.getInvocationType().toString();
-        var methodName = callInstruction.getCaller().getType().toString().split("\\(")[1].replace(")","");
+        var methodName = "";
+        if(callInstruction.getCaller().getType().getTypeOfElement().toString().equals("OBJECTREF")){
+            for(var imps:ollirResult.getOllirClass().getImports()){
+                if(imps.endsWith("."+callInstruction.getCaller().getType().toString().split("\\(")[1].replace(")",""))){
+                    methodName = imps.replace(".","/");
+                }
+            }
+            if(methodName.isEmpty()){
+                methodName = callInstruction.getCaller().getType().toString().split("\\(")[1].replace(")","");
+            }
+        }
+        else methodName = callInstruction.getCaller().getType().toString().split("\\(")[1].replace(")","");
         var op= callInstruction.getCaller().getType().getTypeOfElement();
-        if (type.equals("NEW")) {
+        if (type.equals("NEW") ) {
             code.append("new ").append(methodName).append(NL);
             code.append("dup").append(NL);
 
-        } else if (type.equals("invokespecial") || type.equals("invokevirtual")){
-            if(!currentMethod.isStaticMethod())
-                code.append("aload_0").append(NL);
-            else if(op.toString().equals("THIS"))
-                code.append("aload_0").append(NL);
+
+        } else if (type.equals("invokespecial")){
+            code.append("invokespecial ").append(methodName).append("/<init>()V").append(NL);
+        }
+        else if ( type.equals("invokevirtual")){
             StringBuilder parameters= new StringBuilder();
             for(var param: callInstruction.getArguments()){
                 parameters.append(transformType(param.getType()));
