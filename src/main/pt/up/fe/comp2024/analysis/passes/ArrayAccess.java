@@ -31,10 +31,31 @@ public class ArrayAccess extends AnalysisVisitor {
 
         String name = accExpr.getChild(0).get("name");
 
-        // if variable is array and expression between square brackets is int, then it's correct
-        if (TypeUtils.getExprType(accExpr.getChild(0), table).isArray()
-                && TypeUtils.getExprType(accExpr.getChild(1), table)
-                .equals(new Type(TypeUtils.getIntTypeName(), false))) return null;
+        Type arrayType = TypeUtils.getExprType(accExpr.getChild(0), table);
+        Type accessVarType = TypeUtils.getExprType(accExpr.getChild(1), table);
+        // if variable is an array or varargs and access is an int
+        if ((arrayType.isArray() || arrayType.hasAttribute("vargs"))
+                && accessVarType.equals(new Type(TypeUtils.getIntTypeName(), false))) {
+            /*
+            // if it's an array, check that access int is lower than array size
+            if (accessVarType.hasAttribute("size")) {
+                if (Integer.parseInt(accExpr.getChild(1).get("value"))
+                        < Integer.parseInt(accessVarType.getObject("size").toString()))
+                    return null;
+                else {
+                    // Create error report
+                    var message = String.format("Invalid operation: out-of-bounds access to '%s'.", name);
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(accExpr),
+                            NodeUtils.getColumn(accExpr),
+                            message,
+                            null)
+                    );
+                }
+            }*/
+            return null;
+        }
 
         // Create error report
         var message = String.format("Invalid operation: '%s' is not an array.", name);

@@ -80,11 +80,11 @@ varDecl
 
 type
     : name=INT array=ARRAY
-    | name=INT VARGS
+    | name=INT vargs=VARGS
     | name=INT
-    | name=STRING (array=ARRAY | VARGS)?
-    | name=BOOLEAN (array=ARRAY | VARGS)?
-    | name=ID (array=ARRAY | VARGS)?
+    | name=STRING (array=ARRAY | vargs=VARGS)?
+    | name=BOOLEAN (array=ARRAY | vargs=VARGS)?
+    | name=ID (array=ARRAY | vargs=VARGS)?
     ;
 
 methodDecl locals[boolean isPublic=false]
@@ -134,7 +134,7 @@ expr
     | expr op=OR expr #BinaryExpr
     | expr LRET expr RRET #AccExpr
     | expr (DOT 'length') #LengthExpr
-    | className+=ID (DOT className+=ID)+ #ClassChainExpr
+    | className+=(ID | 'this') (DOT className+=ID)+ #ClassChainExpr
     | expr (DOT name=ID)* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
     | NEW type LRET expr RRET #NewArray
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr

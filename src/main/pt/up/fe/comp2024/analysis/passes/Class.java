@@ -47,6 +47,9 @@ public class Class extends AnalysisVisitor {
         List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
         String className = classNames.get(classNames.size() - 1);
 
+        // if class is 'this'
+        if (className.equals("this")) return null;
+
         // Class is imported, return
         if (imports.stream()
                 .anyMatch(importDecl -> importDecl.equals(className))) {

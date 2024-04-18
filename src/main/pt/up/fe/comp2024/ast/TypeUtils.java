@@ -106,6 +106,8 @@ public class TypeUtils {
         List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
         String className = classNames.get(classNames.size() - 1);
 
+        if (className.equals("this")) return new Type(table.getClassName(), false);
+
         JmmNode curr = expr;
         Type type;
         while (curr != null) {
