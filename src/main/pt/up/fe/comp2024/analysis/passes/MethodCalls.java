@@ -46,7 +46,8 @@ public class MethodCalls extends AnalysisVisitor {
     private boolean checkMethodExists(JmmNode funcExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        List<String> classNameList = funcExpr.getChild(0).getObjectAsList("className", String.class);
+        List<JmmNode> classChainExprs = funcExpr.getDescendants(Kind.CLASS_CHAIN_EXPR);
+        List<String> classNameList = classChainExprs.get(0).getObjectAsList("className", String.class);
         String methodName = classNameList.get(classNameList.size() - 1);
 
         List<String> methods = table.getMethods();
@@ -58,7 +59,7 @@ public class MethodCalls extends AnalysisVisitor {
         if (imports.contains(extendedClass)) return true;
 
         // if class is imported
-        Type type = TypeUtils.getExprType(funcExpr.getChild(0), table);
+        Type type = TypeUtils.getClassFromClassChain(funcExpr.getChild(0), table);
         if (type != null) {
             if (imports.contains(type.getName())) return true;
         }
@@ -104,31 +105,17 @@ public class MethodCalls extends AnalysisVisitor {
         }
 
         List<Symbol> symbols = table.getParameters(methodName);
+        if (symbols.isEmpty()) return;
         List<Type> parameterTypes = new ArrayList<>();
         for (Symbol symbol : symbols) {
             parameterTypes.add(symbol.getType());
         }
 
-        boolean hasVarargs = parameterTypes.get(parameterTypes.size() - 1).hasAttribute("vargs");
-        // if the number of parameters is wrong, if no parameter is varargs
-        if (!hasVarargs && parameterNodes.size() != parameterTypes.size()) {
-            // Create error report
-            var message = String.format("Method '%s' was called with the wrong number of parameters", methodName);
-            addReport(Report.newError(
-                    Stage.SEMANTIC,
-                    NodeUtils.getLine(funcExpr),
-                    NodeUtils.getColumn(funcExpr),
-                    message,
-                    null)
-            );
-            return;
-        }
-
-        int i = 0;
-        while (i < parameterNodes.size()) {
-            if (!TypeUtils.getExprType(parameterNodes.get(i), table).equals(parameterTypes.get(i))) {
+        for (int i = 0; i < parameterTypes.size(); i++) {
+            // if varargs isn't the last parameter
+            if (parameterTypes.get(i).hasAttribute("vargs") && i < parameterTypes.size() - 1) {
                 // Create error report
-                var message = String.format("Method '%s' parameter types are incompatible", methodName);
+                var message = String.format("In method '%s': varargs need to be the last parameter.", methodName);
                 addReport(Report.newError(
                         Stage.SEMANTIC,
                         NodeUtils.getLine(funcExpr),
@@ -136,13 +123,75 @@ public class MethodCalls extends AnalysisVisitor {
                         message,
                         null)
                 );
+                return;
             }
-            i++;
         }
+
+        boolean hasVarArgs = parameterTypes.get(parameterTypes.size() - 1).hasAttribute("vargs");
+        // if no parameter is varargs
+        if (!hasVarArgs) {
+            // if the number of parameters is wrong
+            if (parameterNodes.size() != parameterTypes.size()) {
+                // Create error report
+                var message = String.format("Method '%s' was called with the wrong number of parameters", methodName);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(funcExpr),
+                        NodeUtils.getColumn(funcExpr),
+                        message,
+                        null)
+                );
+                return;
+            }
+
+            int i = 0;
+            while (i < parameterNodes.size()) {
+                // if parameter types are different, create error report
+                if (!TypeUtils.getExprType(parameterNodes.get(i), table).equals(parameterTypes.get(i))) {
+                    // Create error report
+                    var message = String.format("Method '%s' parameter types are incompatible", methodName);
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(funcExpr),
+                            NodeUtils.getColumn(funcExpr),
+                            message,
+                            null)
+                    );
+                    return;
+                }
+                i++;
+            }
+        }
+        else {
+            int i = 0, j = 0;
+            while (i < parameterNodes.size()) {
+                // if parameter types are different, create error report
+                if (!TypeUtils.getExprType(parameterNodes.get(i), table).equals(parameterTypes.get(j))) {
+                    // Create error report
+                    var message = String.format("Method '%s' parameter types are incompatible", methodName);
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(funcExpr),
+                            NodeUtils.getColumn(funcExpr),
+                            message,
+                            null)
+                    );
+                    return;
+                }
+                // if current parameter is not varArgs
+                if (j < parameterTypes.size() - 1) {
+                    j++;
+                }
+                i++;
+            }
+        }
+
     }
 
     private Void visitFuncExpr(JmmNode funcExpr, SymbolTable table) {
-        if (checkMethodExists(funcExpr, table)) checkMethodCallParameters(funcExpr, table);
+        if (checkMethodExists(funcExpr, table)) {
+            checkMethodCallParameters(funcExpr, table);
+        }
         return null;
     }
 

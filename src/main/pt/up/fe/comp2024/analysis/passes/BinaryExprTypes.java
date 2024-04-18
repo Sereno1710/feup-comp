@@ -41,25 +41,32 @@ public class BinaryExprTypes extends AnalysisVisitor {
         Pair<String, Type> lastVariable = new Pair<>("", null);
         String variableIfTheresError = "";
         for (var expr : expressions) {
-            String name;
+            String name = "";
             Type type;
             if (expr.hasAttribute("name")) {
                 name = expr.get("name");
-            } else {
+            } else if (expr.hasAttribute("value")){
                 name = expr.get("value");
+            } else {
+                name = expr.getObjectAsList("className", String.class).get(expr.getObjectAsList("className", String.class).size() - 1);
             }
 
-            if (expr.getKind().equals(Kind.VAR_REF_EXPR.toString())) {
-                type = TypeUtils.getExprType(expr, table);
-            } else {
-                if (expr.getKind().equals(Kind.INTEGER_LITERAL.toString())) {
-                    type = new Type(TypeUtils.getIntTypeName(), false);
-                } else if (expr.getKind().equals(Kind.BOOLEAN_LITERAL.toString())) {
-                    type = new Type(TypeUtils.getBooleanTypeName(), false);
-                } else {
-                    type = null;
-                }
+            type = TypeUtils.getExprType(expr, table);
+
+            if (type == null) {
+                // Create error report
+                var message = String.format("Invalid operation: '%s' and '%s' have different types.", lastVariable.a, variableIfTheresError);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+
+                return null;
             }
+
             // if expression is array, operation is invalid
             if (Objects.requireNonNull(type).isArray()) {
                 // Create error report
