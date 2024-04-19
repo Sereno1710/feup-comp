@@ -354,7 +354,6 @@ public class JasminGenerator {
             }
         }
         else methodName = callInstruction.getCaller().getType().toString().split("\\(")[1].replace(")","");
-        var op= callInstruction.getCaller().getType().getTypeOfElement();
         if (type.equals("NEW") ) {
             code.append("new ").append(methodName).append(NL);
             code.append("dup").append(NL);
@@ -363,6 +362,7 @@ public class JasminGenerator {
         } else if (type.equals("invokespecial")){
             code.append(generateOperand((Operand)callInstruction.getOperands().get(0)));
             code.append("invokespecial ").append(methodName).append("/<init>()V").append(NL);
+            code.append("pop").append(NL);
         }
         else if ( type.equals("invokevirtual")){
             StringBuilder parameters= new StringBuilder();
@@ -381,9 +381,6 @@ public class JasminGenerator {
 
             var methodName2 = callInstruction.getMethodName().toString().split(":")[1].split("\\.")[0].replace("\"","").replace(" ","");
             code.append(type).append(" ").append(methodName).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
-            if(callInstruction.getReturnType().toString().equals("VOID") && callInstruction.getInstType().toString().equals("CALL")){
-                code.append("pop").append(NL);
-            }
         } else {
             var parameters= new StringBuilder();
             for(var param: callInstruction.getArguments()){
@@ -418,6 +415,9 @@ public class JasminGenerator {
                     .append(")")
                     .append(transformType(callInstruction.getReturnType()))
                     .append(NL);
+            if(!callInstruction.getReturnType().toString().equals("VOID")){
+                code.append("pop").append(NL);
+            }
         }
         return code.toString();
     }
