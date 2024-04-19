@@ -131,22 +131,9 @@ public class JasminGenerator {
         var methodType = method.getReturnType();
         // TODO: Hardcoded param types and return type, needs to be expanded
         var methodParameters = method.getParams();
-        var params="";
+        var params=new StringBuilder();
         for(var param: methodParameters){
-            var par="";
-            if(param.getType().getTypeOfElement().toString().equals("ARRAYREF")){
-                    par+="["+ transformType(param.getType());
-            }
-            else if(param.getType().getTypeOfElement().toString().equals("INT32")){
-                par+="I";
-            }
-            else if(param.getType().getTypeOfElement().toString().equals("BOOLEAN")) {
-                par += "Z";
-            }
-            else{
-                par += transformType(param.getType());
-            }
-            params+=par;
+            params.append(transformType(param.getType()));
         }
         var static_m="";
         if(method.isStaticMethod()){
@@ -177,28 +164,25 @@ public class JasminGenerator {
     }
 
     private String transformType(Type methodType) {
-        if(methodType.toString().matches("INT32")){
-            return "I";
-        }
-        else if(methodType.toString().matches("BOOLEAN")){
-            return "Z";
-        }
-        else if(methodType.toString().matches("VOID")){
-            return "V";
-        } else if (methodType.toString().contains("OBJECTREF")){
-            for(var imps:ollirResult.getOllirClass().getImports()){
-                if(imps.endsWith("."+methodType.toString().split("\\(")[1].replace(")",""))){
-                   return imps.replace(".","/") + ";";
+        var code= new StringBuilder();
+        if (methodType.getTypeOfElement() == ElementType.OBJECTREF){
+            code.append("L");
+            if(methodType.getTypeOfElement() == ElementType.THIS){
+                code.append(ollirResult.getOllirClass().getClassName());
+            }
+            else {
+                for (String importedClass : ollirResult.getOllirClass().getImports()) {
+                    if (importedClass.endsWith(((ClassType) methodType).getName())) {
+                        return (((ClassType) methodType).getName()).replace("\\.","/");
+                    }
                 }
             }
-            return methodType.toString().split("\\(")[1].replace(")","");
 
-        } else if(methodType.toString().contains("STRING")){
-            return "Ljava/lang/String;";
+
         } else if(methodType.getTypeOfElement().toString().equals("ARRAYREF")){
-            return transformString(methodType.toString());
+            return "[" + transformType(((ArrayType) methodType).getElementType());
         }
-        return methodType.toString();
+        return transformString(methodType.toString());
     }
 
     private String transformString(String string) {
@@ -207,10 +191,7 @@ public class JasminGenerator {
             case "BOOLEAN": return "Z";
             case "STRING": return "Ljava/lang/String;";
             default:
-                if(string.contains("OBJECTREF")){
-                    return string.split("\\(")[1].replace(")","");
-                }
-                return  string;
+                return "V";
         }
     }
 
