@@ -31,6 +31,7 @@ public enum Kind {
     ARRAY_EXPR,
     PAREN_EXPR,
     NOT_EXPR,
+    LENGTH_EXPR,
     ;
 
 
