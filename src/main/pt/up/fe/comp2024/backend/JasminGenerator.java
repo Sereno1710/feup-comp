@@ -368,8 +368,16 @@ public class JasminGenerator {
             case "invokespecial" -> {
                 if(a == ElementType.THIS)
                     methodName = ollirResult.getOllirClass().getSuperClass();
+
+                for (var arg : callInstruction.getArguments()) {
+                    code.append(generators.apply(arg));
+                }
+                var param="";
+                for (var arg : callInstruction.getArguments()) {
+                    param+=transformType(arg.getType());
+                }
                 code.append(generateOperand((Operand) callInstruction.getOperands().get(0)));
-                code.append("invokespecial ").append(methodName).append("/<init>()V").append(NL);
+                code.append("invokespecial ").append(methodName).append("/<init>").append("(").append(param).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
                 code.append("pop").append(NL);
             }
             case "invokevirtual" -> {
