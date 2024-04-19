@@ -29,7 +29,8 @@ public enum Kind {
     NEW_CLASS_EXPR,
     NEW_ARRAY,
     ARRAY_EXPR,
-    PAREN_EXPR
+    PAREN_EXPR,
+    NOT_EXPR,
     ;
 
 

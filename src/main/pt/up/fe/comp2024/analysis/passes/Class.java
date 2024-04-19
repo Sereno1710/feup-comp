@@ -86,6 +86,19 @@ public class Class extends AnalysisVisitor {
         List<Symbol> fields = table.getFields();
         Map<String, String> fieldMap = new HashMap<>();
         for (Symbol field : fields) {
+            if (field.getType().hasAttribute("vargs")) {
+                // Create error report
+                var message = String.format("Field '%s' cannot be varargs.", field.getName());
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(method.getParent()),
+                        NodeUtils.getColumn(method.getParent()),
+                        message,
+                        null)
+                );
+
+                return null;
+            }
             if (fieldMap.containsKey(field.getName())) {
                 // Create error report
                 var message = String.format("Field '%s' was already defined.", field.getName());
@@ -116,6 +129,8 @@ public class Class extends AnalysisVisitor {
                         message,
                         null)
                 );
+
+                return null;
             }
             paramMap.put(param.getName(), "a");
         }
@@ -124,6 +139,19 @@ public class Class extends AnalysisVisitor {
         List<Symbol> locals = table.getLocalVariables(currentMethod);
         Map<String, String> localsMap = new HashMap<>() {};
         for (Symbol sym : locals) {
+            if (sym.getType().hasAttribute("vargs")) {
+                // Create error report
+                var message = String.format("Local '%s' cannot be varargs.", sym.getName());
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(method),
+                        NodeUtils.getColumn(method),
+                        message,
+                        null)
+                );
+
+                return null;
+            }
             if (localsMap.containsKey(sym.getName())) {
                 // Create error report
                 var message = String.format("Variable '%s' was already defined.", sym.getName());
@@ -134,6 +162,8 @@ public class Class extends AnalysisVisitor {
                         message,
                         null)
                 );
+
+                return null;
             }
             localsMap.put(sym.getName(), "a");
         }

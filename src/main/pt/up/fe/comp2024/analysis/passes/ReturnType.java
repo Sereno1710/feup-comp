@@ -30,6 +30,19 @@ public class ReturnType extends AnalysisVisitor {
     private Void visitReturnStmt(JmmNode returnStmt, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
+        if (TypeUtils.getExprType(returnStmt.getChild(0), table) != null && TypeUtils.getExprType(returnStmt.getChild(0), table).hasAttribute("vargs")) {
+            // Create error report
+            var message = String.format("In method '%s': return statement cannot be varargs.", returnStmt.getParent().get("name"));
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(returnStmt),
+                    NodeUtils.getColumn(returnStmt),
+                    message,
+                    null)
+            );
+            return null;
+        }
+
         // if return types are correct
         if (table.getReturnType(returnStmt.getParent().get("name"))
                 .equals(TypeUtils.getExprType(returnStmt.getChild(0), table)))
