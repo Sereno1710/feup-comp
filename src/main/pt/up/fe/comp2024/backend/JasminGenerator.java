@@ -338,15 +338,16 @@ public class JasminGenerator {
     private String generateCallInstruction(CallInstruction callInstruction) {
         var code = new StringBuilder();
         var type = callInstruction.getInvocationType().toString();
+        var a= callInstruction.getCaller().getType().getTypeOfElement();
         Operand first = (Operand) callInstruction.getOperands().get(0);
         Type spe= first.getType();
         var methodName="";
 
-        if(spe.getTypeOfElement() == ElementType.OBJECTREF){
+        if(a == ElementType.OBJECTREF){
             methodName=((ClassType) spe).getName();
         }
         else {
-            if(spe.getTypeOfElement() == ElementType.THIS){
+            if(a == ElementType.THIS){
                 methodName=ollirResult.getOllirClass().getClassName();
             }
             else {
@@ -365,7 +366,8 @@ public class JasminGenerator {
                 code.append("dup").append(NL);
             }
             case "invokespecial" -> {
-
+                if(a == ElementType.THIS)
+                    methodName = ollirResult.getOllirClass().getSuperClass();
                 code.append(generateOperand((Operand) callInstruction.getOperands().get(0)));
                 code.append("invokespecial ").append(methodName).append("/<init>()V").append(NL);
                 code.append("pop").append(NL);
@@ -381,7 +383,6 @@ public class JasminGenerator {
                         code.append(generateLiteral((LiteralElement) staticElement));
                     else if (staticElement instanceof Operand) code.append(generateOperand((Operand) staticElement));
                 }
-
                 for (var param : callInstruction.getArguments()) {
                     parameters.append(transformType(param.getType()));
                 }
