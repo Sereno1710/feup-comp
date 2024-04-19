@@ -181,18 +181,17 @@ public class JasminGenerator {
         if (methodType.getTypeOfElement() == ElementType.OBJECTREF){
             code.append("L");
             if(methodType.getTypeOfElement() == ElementType.THIS){
-                code.append(ollirResult.getOllirClass().getClassName()).append(";");
-                return code.toString();
+                code.append(ollirResult.getOllirClass().getClassName());
             }
             else {
                 for (String importedClass : ollirResult.getOllirClass().getImports()) {
                     if (importedClass.endsWith(((ClassType) methodType).getName())) {
-                        return (((ClassType) methodType).getName()).replace("\\.","/");
+                          code.append((((ClassType) methodType).getName()).replace("\\.","/"));
+                          break;
                     }
                 }
             }
-
-
+            return code.toString();
         } else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
             return "[" + transformType(((ArrayType) methodType).getElementType());
         }
