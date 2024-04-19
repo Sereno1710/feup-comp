@@ -6,6 +6,9 @@ import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp2024.ast.TypeUtils;
 
+import java.util.List;
+import java.util.Objects;
+
 import static pt.up.fe.comp2024.ast.Kind.*;
 
 /**
@@ -29,6 +32,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         addVisit(BINARY_EXPR, this::visitBinExpr);
         addVisit(INTEGER_LITERAL, this::visitInteger);
         addVisit(FUNC_EXPR, this::visitFuncExpr);
+        addVisit(NEW_CLASS_EXPR, this::visitNewClassExpr);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -83,29 +87,79 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
 
     private OllirExprResult visitFuncExpr(JmmNode node, Void unused) {
         var classChainExpr = node.getJmmChild(0);
-        String libName = classChainExpr.get("_tset61");
-        String functionName = classChainExpr.get("ID");
+        List<String> classAndFuncNames = classChainExpr.getObjectAsList("className", String.class);
+        String libName = classAndFuncNames.get(0);
+        String functionName = classAndFuncNames.get(1);
+
 
         StringBuilder code = new StringBuilder();
+        StringBuilder computation = new StringBuilder();
         StringBuilder funcParamsCode = new StringBuilder();
 
-        for (int i = 1; i < node.getNumChildren(); i++) {
-            var child = node.getJmmChild(i);
-            var childCode = visit(child).getCode();
-            funcParamsCode.append(", ");
-            funcParamsCode.append(childCode);
+        var importedLib = false;
+        for (var importLib : table.getImports()) {
+            if (importLib.contains(libName)) {
+                importedLib = true;
+                break;
+            }
         }
 
-        code.append("invokestatic(");
-        code.append(libName);
-        code.append(", \"");
-        code.append(functionName);
-        code.append("\"");
-        code.append(funcParamsCode);
-        code.append(").V");
-        code.append(END_STMT);
+        if (importedLib) {
+            code.append("invokestatic(");
+            code.append(libName);
+            code.append(", \"");
+            code.append(functionName);
+            code.append("\"");
+            code.append(funcParamsCode);
+            code.append(").V");
+            code.append(END_STMT);
+        } else {
+            Type resType = TypeUtils.getExprType(node, table);
+            String resOllirType = OptUtils.toOllirType(resType);
+            Type classType = TypeUtils.getClassFromClassChain(classChainExpr, table);
+            String classOllirType = OptUtils.toOllirType(classType);
 
-        return new OllirExprResult(code.toString());
+            String temp = OptUtils.getTemp();
+            code.append(temp).append(resOllirType);
+
+            computation.append(code).append(SPACE)
+                    .append(ASSIGN).append(resOllirType).append(SPACE);
+
+            for (int i = 1; i < node.getNumChildren(); i++) {
+                var child = node.getJmmChild(i);
+                var childCode = visit(child).getCode();
+                funcParamsCode.append(", ");
+                funcParamsCode.append(childCode);
+            }
+            computation.append("invokevirtual(");
+            computation.append(libName);
+            computation.append(classOllirType);
+            computation.append(", \"");
+            computation.append(functionName);
+            computation.append("\"");
+            computation.append(funcParamsCode);
+            computation.append(")");
+            computation.append(resOllirType);
+            computation.append(END_STMT);
+        }
+        return new OllirExprResult(code.toString(), computation);
+    }
+
+    private OllirExprResult visitNewClassExpr(JmmNode node, Void unused) {
+        String className = node.get("name");
+
+        String tmpClassInstance = OptUtils.getTemp();
+
+        StringBuilder code = new StringBuilder();
+        StringBuilder computation = new StringBuilder();
+
+        code.append(tmpClassInstance).append(".").append(className);
+
+        computation.append(code).append(SPACE).append(ASSIGN)
+                .append(".").append(className).append(SPACE).append("new(").append(className).append(").")
+                .append(className).append(END_STMT);
+
+        return new OllirExprResult(code.toString(), computation);
     }
 
 
@@ -118,12 +172,15 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
      */
     private OllirExprResult defaultVisit(JmmNode node, Void unused) {
         StringBuilder code = new StringBuilder();
+        StringBuilder computation = new StringBuilder();
 
         for (var child : node.getChildren()) {
-            code.append(visit(child).getCode());
+            OllirExprResult visitResult = visit(child);
+            code.append(visitResult.getCode());
+            computation.append(visitResult.getComputation());
         }
 
-        return new OllirExprResult(code.toString());
+        return new OllirExprResult(code.toString(), computation);
     }
 
 }

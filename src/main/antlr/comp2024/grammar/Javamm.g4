@@ -124,7 +124,9 @@ stmt
 
 
 expr
-    : name=ID op=(INC | DEC) #IncDecExpr
+    : className+=(ID | 'this') (DOT className+=ID)+ #ClassChainExpr
+    | expr (DOT name=ID)* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
+    | name=ID op=(INC | DEC) #IncDecExpr
     | NOT expr #NotExpr
     | expr op=(MUL  | DIV | REM) expr #BinaryExpr //
     | expr op=(ADD | SUB) expr #BinaryExpr //
@@ -134,8 +136,6 @@ expr
     | expr op=OR expr #BinaryExpr
     | expr LRET expr RRET #AccExpr
     | expr (DOT 'length') #LengthExpr
-    | className+=(ID | 'this') (DOT className+=ID)+ #ClassChainExpr
-    | expr (DOT name=ID)* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
     | NEW type LRET expr RRET #NewArray
     | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
     | LPAREN expr RPAREN #ParenExpr

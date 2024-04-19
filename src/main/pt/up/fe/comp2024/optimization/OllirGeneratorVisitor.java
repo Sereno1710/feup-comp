@@ -92,6 +92,9 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         Type thisType = TypeUtils.getTypeFromString(node.get("name"), node, table);
         String typeString = OptUtils.toOllirType(thisType);
 
+        if (Objects.equals(node.getJmmChild(0).getKind(), "NewClassExpr")) {
+            code.append("invokespecial(").append(rhs.getCode()).append(", \"<init>\").V").append(END_STMT);
+        }
 
         code.append(lhs);
         code.append(typeString);
@@ -104,6 +107,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         code.append(rhs.getCode());
 
         code.append(END_STMT);
+
 
         return code.toString();
     }
@@ -167,12 +171,18 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         code.append(name);
 
         // param
-
-        if(Objects.equals(name, "main")) {
+        if (Objects.equals(name, "main")) {
             code.append("(args.array.String)");
         } else {
-            var paramCode = visit(node.getJmmChild(1));
-            code.append("(").append(paramCode).append(")");
+            code.append("(");
+
+            var params = node.getJmmChild(1);
+            for (int i = 0; i < params.getNumChildren(); i++) {
+                if (i != 0) code.append(", ");
+                code.append(visit(params.getJmmChild(i)));
+            }
+
+            code.append(")");
         }
 
         // type
@@ -185,7 +195,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         var afterParam = 2;
         for (int i = afterParam; i < node.getNumChildren(); i++) {
             var child = node.getJmmChild(i);
-            if(Objects.equals(child.getKind(), "ExprStmt")) {
+            if (Objects.equals(child.getKind(), "ExprStmt")) {
                 code.append(exprVisitor.visit(child).getCode());
             } else {
                 code.append(visit(child));
@@ -194,7 +204,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
 
         }
 
-        if(Objects.equals(name, "main")) {
+        if (Objects.equals(name, "main")) {
             code.append("ret.V");
             code.append(END_STMT);
         }

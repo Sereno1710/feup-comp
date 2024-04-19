@@ -48,7 +48,7 @@ public class BinaryExprTypes extends AnalysisVisitor {
             } else if (expr.hasAttribute("value")){
                 name = expr.get("value");
             } else {
-                name = expr.getObjectAsList("className", String.class).get(expr.getObjectAsList("className", String.class).size() - 1);
+                name = expr.getJmmChild(0).getObjectAsList("className", String.class).get(0);
             }
 
             type = TypeUtils.getExprType(expr, table);
