@@ -162,6 +162,9 @@ public class JasminGenerator {
         for (var inst : method.getInstructions()) {
             var instCode = StringLines.getLines(generators.apply(inst)).stream()
                     .collect(Collectors.joining(NL + TAB, TAB, NL));
+
+            if(inst.getInstType().toString().equals("CALL") && !((CallInstruction) inst).getReturnType().toString().equals("VOID"))
+                code.append(TAB).append("pop").append(NL);
             code.append(instCode);
         }
 
@@ -381,9 +384,6 @@ public class JasminGenerator {
 
             var methodName2 = callInstruction.getMethodName().toString().split(":")[1].split("\\.")[0].replace("\"","").replace(" ","");
             code.append(type).append(" ").append(methodName).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
-            if(callInstruction.getReturnType().toString().equals("VOID") && callInstruction.getInstType().toString().equals("CALL")){
-                code.append("pop").append(NL);
-            }
         } else {
             var parameters= new StringBuilder();
             for(var param: callInstruction.getArguments()){
