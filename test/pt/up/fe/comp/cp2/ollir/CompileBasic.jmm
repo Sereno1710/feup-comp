@@ -1,14 +1,21 @@
-class CallToMethodAssumedInImport{
+import imp.Obj;
+import io;
 
-    public static void main(String[] args) {
+class Simple {
 
+    public int add(int a, int b){
+        int c;
+        boolean flag;
+        Simple s;
+        Obj obj;
+        c = 1;
+        s = new Simple();
+        obj = new Obj();
+        s.test(obj);
+        return c;
     }
-    public boolean salam(boolean b){
-        return b;
-    }
 
-    public boolean foo(boolean b) {
-        b = this.salam(this.foo(true));
-        return true;
+    public int test(Obj o){
+        return 1;
     }
 }

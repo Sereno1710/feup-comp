@@ -47,7 +47,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
     }
 
     private OllirExprResult visitBoolean(JmmNode node, Void unused) {
-        var boolType = new Type("bool", false);
+        var boolType = new Type(TypeUtils.getBooleanTypeName(), false);
         String ollirIntType = OptUtils.toOllirType(boolType);
         String value = node.get("value");
         if(Objects.equals(value, "true")) {
@@ -141,22 +141,35 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
             Type classType = TypeUtils.getClassFromClassChain(classChainExpr, table);
             String classOllirType = OptUtils.toOllirType(classType);
 
-            String temp = OptUtils.getTemp();
-            code.append(temp).append(resOllirType);
+            if(Objects.equals(node.getParent().getKind(), "ExprStmt")) {
+                code.append("invokevirtual(");
+                code.append(libName);
+                code.append(classOllirType);
+                code.append(", \"");
+                code.append(functionName);
+                code.append("\"");
+                code.append(funcParamsCode);
+                code.append(")");
+                code.append(resOllirType);
+                code.append(END_STMT);
+            } else {
+                String temp = OptUtils.getTemp();
+                code.append(temp).append(resOllirType);
 
-            computation.append(code).append(SPACE)
-                    .append(ASSIGN).append(resOllirType).append(SPACE);
+                computation.append(code).append(SPACE)
+                        .append(ASSIGN).append(resOllirType).append(SPACE);
 
-            computation.append("invokevirtual(");
-            computation.append(libName);
-            computation.append(classOllirType);
-            computation.append(", \"");
-            computation.append(functionName);
-            computation.append("\"");
-            computation.append(funcParamsCode);
-            computation.append(")");
-            computation.append(resOllirType);
-            computation.append(END_STMT);
+                computation.append("invokevirtual(");
+                computation.append(libName);
+                computation.append(classOllirType);
+                computation.append(", \"");
+                computation.append(functionName);
+                computation.append("\"");
+                computation.append(funcParamsCode);
+                computation.append(")");
+                computation.append(resOllirType);
+                computation.append(END_STMT);
+            }
         }
         return new OllirExprResult(code.toString(), computation);
     }
