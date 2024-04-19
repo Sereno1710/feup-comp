@@ -49,9 +49,24 @@ public class BinaryExprTypes extends AnalysisVisitor {
                 name = expr.get("value");
             } else {
                 if (expr.getKind().equals("BinaryExpr")) {
+                    Type typeTemp = TypeUtils.getExprType(expr, table);
                     for(var child: expr.getChildren()){
-                        if(child.getKind().equals("BinaryExpr"))
+                        if(child.getKind().equals("BinaryExpr")) {
+                            if (!TypeUtils.getExprType(child, table).equals(typeTemp)) {
+                                // Create error report
+                                var message = "Invalid operation: incompatible types in expression.";
+                                addReport(Report.newError(
+                                        Stage.SEMANTIC,
+                                        NodeUtils.getLine(binaryExpr),
+                                        NodeUtils.getColumn(binaryExpr),
+                                        message,
+                                        null)
+                                );
+
+                                return null;
+                            }
                             visitBinaryExpr(child, table);
+                        }
                     }
                 }
                 else  name = expr.getJmmChild(0).getObjectAsList("className", String.class).get(0);
