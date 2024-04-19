@@ -79,9 +79,14 @@ public class JasminGenerator {
         code.append(".class ").append(modifier).append(className).append(NL);
 
         // TODO: Hardcoded to Object, needs to be expanded
-
-        classUnit.setSuperClass(classUnit.getSuperClass()== null || classUnit.getSuperClass().equals("Object")? "java/lang/Object" : getImportedClassName(classUnit.getSuperClass()));;
-        code.append(".super ").append(classUnit.getSuperClass()).append(NL);
+        code.append(".super ");
+        if (classUnit.getSuperClass() == null || classUnit.getSuperClass().equals("Object")) {
+            code.append("java/lang/Object").append(NL);
+            code.append(";default constructor");
+        } else {
+            code.append(getImportedClassName(classUnit.getSuperClass())).append(NL);
+        }
+        ;
         var fieldsList = classUnit.getFields();
         for(var field: fieldsList){
             var final_f="";
@@ -100,16 +105,7 @@ public class JasminGenerator {
 
             code.append(transformType(field.getFieldType())).append(NL);
         }
-        // generate a single constructor method
-        var defaultConstructor = """
-                ;default constructor
-                .method public <init>()V
-                    aload_0
-                    invokespecial java/lang/Object/<init>()V
-                    return
-                .end method
-                """;
-        code.append(defaultConstructor);
+
 
         // generate code for all other methods
         for (var method : ollirResult.getOllirClass().getMethods()) {
