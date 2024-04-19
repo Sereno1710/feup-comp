@@ -40,6 +40,7 @@ public class TypeUtils {
 
 
         Type type = switch (kind) {
+            case PAREN_EXPR -> getExprType(expr.getChild(0), table);
             case BINARY_EXPR -> getBinExprType(expr);
             case VAR_REF_EXPR -> getVarExprType(expr, table);
             case NEW_CLASS_EXPR -> getTypeFromString(expr.getParent().get("name"), expr, table);
@@ -57,8 +58,6 @@ public class TypeUtils {
     }
 
     private static Type getBinExprType(JmmNode binaryExpr) {
-        // TODO: Simple implementation that needs to be expanded
-
         String operator = binaryExpr.get("op");
 
         return switch (operator) {
