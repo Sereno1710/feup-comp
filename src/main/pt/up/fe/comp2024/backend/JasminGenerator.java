@@ -215,7 +215,7 @@ public class JasminGenerator {
             case "BOOLEAN": return "Z";
             case "STRING": return "Ljava/lang/String;";
             case "VOID": return "V";
-            default: return null;
+            default: return string;
         }
     }
 
