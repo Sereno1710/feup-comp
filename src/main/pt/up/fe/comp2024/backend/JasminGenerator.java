@@ -366,6 +366,7 @@ public class JasminGenerator {
         } else if (type.equals("invokespecial")){
             code.append(generateOperand((Operand)callInstruction.getOperands().get(0)));
             code.append("invokespecial ").append(methodName).append("/<init>()V").append(NL);
+            code.append("pop").append(NL);
         }
         else if ( type.equals("invokevirtual")){
             StringBuilder parameters= new StringBuilder();
