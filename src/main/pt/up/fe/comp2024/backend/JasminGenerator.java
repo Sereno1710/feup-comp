@@ -73,7 +73,10 @@ public class JasminGenerator {
         var code = new StringBuilder();
         // generate class name
         var className = classUnit.getClassName();
-        code.append(".class ").append(className).append(NL);
+        var modifier = classUnit.getClassAccessModifier() != AccessModifier.DEFAULT ?
+                classUnit.getClassAccessModifier().name().toLowerCase() + " " :
+                "";
+        code.append(".class ").append(modifier).append(className).append(NL);
 
         // TODO: Hardcoded to Object, needs to be expanded
         code.append(".super java/lang/Object").append(NL);
@@ -87,13 +90,12 @@ public class JasminGenerator {
             if(field.isStaticField()){
                 static_f="static ";
             }
-            if(field.getFieldAccessModifier()== AccessModifier.PRIVATE){
-                code.append(".field ").append("private ").append(final_f).append(static_f).append(field.getFieldName()).append(" ");
-            }
-            else if(field.getFieldAccessModifier() == AccessModifier.PROTECTED){
-                code.append(".field ").append("protected ").append(final_f).append(static_f).append(field.getFieldName()).append(" ");
-            }
-            else code.append(".field ").append("public ").append(final_f).append(static_f).append(field.getFieldName()).append(" ");
+            var modifier_f = field.getFieldAccessModifier() != AccessModifier.DEFAULT ?
+                    field.getFieldAccessModifier().name().toLowerCase() + " " :
+                    "";
+
+            code.append(".field ").append(modifier_f).append(final_f).append(static_f).append(field.getFieldName()).append(" ");
+
             code.append(transformType(field.getFieldType())).append(NL);
         }
         // generate a single constructor method
@@ -149,9 +151,6 @@ public class JasminGenerator {
             static_m="static ";
         }
         var final_m="";
-        if(method.isFinalMethod()){
-            final_m="final ";
-        }
 
         code.append("\n.").append(method.isFinalMethod() ? "final method" : "method ").append(modifier).append(static_m).append(final_m).append(methodName).append("(").append(params).append(")").append(transformType(methodType)).append(NL);
 
@@ -194,7 +193,7 @@ public class JasminGenerator {
             case "BOOLEAN": return "Z";
             case "STRING": return "Ljava/lang/String;";
             case "VOID": return "V";
-            default: return "";
+            default: return null;
         }
     }
 
@@ -338,7 +337,7 @@ public class JasminGenerator {
                 code.append("dup").append(NL);
             }
             case "invokespecial" -> {
-                code.append(generators.apply(first)).append(NL);
+                code.append(generators.apply(first));
                 if(a.getTypeOfElement() == ElementType.THIS)
                     methodName = ollirResult.getOllirClass().getSuperClass();
                 else {
@@ -353,7 +352,7 @@ public class JasminGenerator {
                 code.append("pop").append(NL);
             }
             case "invokevirtual" -> {
-                code.append(generators.apply(first)).append(NL);
+                code.append(generators.apply(first));
                 LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
                 StringBuilder parameters = new StringBuilder();
                 for (var op : callInstruction.getArguments()) {
@@ -367,7 +366,7 @@ public class JasminGenerator {
                 code.append(type).append(" ").append(getImportedClassName(((ClassType) first.getType()).getName())).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
             }
             case "invokestatic" -> {
-                code.append(generators.apply(first)).append(NL);
+                code.append(generators.apply(first));
                 LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
                 var parameters = new StringBuilder();
                 for (var op : callInstruction.getArguments()) {
@@ -399,7 +398,7 @@ public class JasminGenerator {
 
         for (String imported : this.classUnit.getImports()) {
             if (imported.endsWith(className)) {
-                return imported.replace("\\.","/");
+                return imported.replace(".","/");
             }
         }
 
