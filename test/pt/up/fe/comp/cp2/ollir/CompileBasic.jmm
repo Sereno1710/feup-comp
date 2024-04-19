@@ -1,19 +1,16 @@
-import imp.Obj;
-
-
-class Test {
+import io;
+import Quicksort;
+class CompileBasic extends Quicksort {
     int intField;
-    Obj test;
-
-    public static void main(String[] args) {
+    boolean boolField;
+    public int method1() {
+        int intLocal1;
+        boolean boolLocal1;
+        return 0;
     }
-
-
-    public Obj foo(Obj obj) {
-        Test a;
-        a = new Test();
-        test = new Obj();
-        (new Obj()).foo();
-        return obj;
+    public boolean method2(int intParam1, boolean boolParam1) {
+        return boolParam1;
+    }
+    public static void main(String[] args) {
     }
 }
