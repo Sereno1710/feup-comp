@@ -185,7 +185,7 @@ public class JasminGenerator {
     private String transformType(Type methodType) {
         var code= new StringBuilder();
         if (methodType.getTypeOfElement() == ElementType.OBJECTREF){
-            code.append(getImportedClassName(methodType.getTypeOfElement().toString()));
+            code.append(getImportedClassName(methodType.getTypeOfElement().toString())).append(";");
             return code.toString();
         } else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
             return "[" + transformType(((ArrayType) methodType).getElementType());
@@ -400,7 +400,7 @@ public class JasminGenerator {
     private String getImportedClassName(String className) {
 
         if (className.equals("this"))
-            return ollirResult.getOllirClass().getClassName();
+            return classUnit.getClassName();
 
         for (String imported : this.classUnit.getImports()) {
             if (imported.endsWith(className)) {
