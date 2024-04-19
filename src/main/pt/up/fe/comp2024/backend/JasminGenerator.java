@@ -192,7 +192,7 @@ public class JasminGenerator {
             }
 
 
-        } else if(methodType.getTypeOfElement().toString().equals("ARRAYREF")){
+        } else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
             return "[" + transformType(((ArrayType) methodType).getElementType());
         }
         return transformString(methodType.toString());
@@ -203,8 +203,8 @@ public class JasminGenerator {
             case "INT32": return "I";
             case "BOOLEAN": return "Z";
             case "STRING": return "Ljava/lang/String;";
-            default:
-                return "V";
+            case "VOID": return "V";
+            default: return null;
         }
     }
 
@@ -256,7 +256,6 @@ public class JasminGenerator {
     }
 
     private String generateOperand(Operand operand) {
-        // get register
 
         if(operand.getType().getTypeOfElement().toString().equals("THIS")) return "aload 0"+ NL;
         else if(operand.getType().getTypeOfElement().toString().equals("INT32") | operand.getType().getTypeOfElement().toString().equals("BOOLEAN")) {
@@ -372,14 +371,6 @@ public class JasminGenerator {
                 for (var op : callInstruction.getArguments()) {
                     code.append(generators.apply(op));
                 }
-                for (Element staticElement : callInstruction.getOperands()) {
-                    if (staticElement.toString().equals(callInstruction.getMethodName().toString())) {
-                        continue;
-                    }
-                    if (staticElement instanceof LiteralElement)
-                        code.append(generateLiteral((LiteralElement) staticElement));
-                    else if (staticElement instanceof Operand) code.append(generateOperand((Operand) staticElement));
-                }
                 for (var param : callInstruction.getArguments()) {
                     parameters.append(transformType(param.getType()));
                 }
@@ -407,23 +398,23 @@ public class JasminGenerator {
                         .append(transformType(callInstruction.getReturnType()))
                         .append(NL);
             }
+            default ->{
+                throw new NotImplementedException("Not supported: " + callInstruction.getInvocationType());
+            }
         }
         return code.toString();
     }
-    private String getImportedClassName(String basicClassName) {
+    private String getImportedClassName(String className) {
 
-        // .this object
-        if (basicClassName.equals("this"))
+        if (className.equals("this"))
             return ollirResult.getOllirClass().getClassName();
 
-        // imported object
-        for (String importedClass : this.classUnit.getImports()) {
-            if (importedClass.endsWith(basicClassName)) {
-                return importedClass.replace("\\.","/");
+        for (String imported : this.classUnit.getImports()) {
+            if (imported.endsWith(className)) {
+                return imported.replace("\\.","/");
             }
         }
 
-        // default object name
-        return basicClassName;
+        return className;
     }
 }
