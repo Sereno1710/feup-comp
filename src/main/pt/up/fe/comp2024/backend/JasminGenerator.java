@@ -83,9 +83,9 @@ public class JasminGenerator {
             code.append("java/lang/Object").append(NL);
 
         } else {
-            code.append(getImportedClassName(classUnit.getSuperClass())).append(NL);
+            code.append(classUnit.getSuperClass().replace("\\.","/")).append(NL);
         }
-        ;
+
         var fieldsList = classUnit.getFields();
         for(var field: fieldsList){
             var final_f="";
@@ -99,7 +99,6 @@ public class JasminGenerator {
             var modifier_f = field.getFieldAccessModifier() != AccessModifier.DEFAULT ?
                     field.getFieldAccessModifier().name().toLowerCase() + " " :
                     "";
-
             code.append(".field ").append(modifier_f).append(final_f).append(static_f).append(field.getFieldName()).append(" ");
 
             code.append(transformType(field.getFieldType())).append(NL);
@@ -171,7 +170,7 @@ public class JasminGenerator {
 
             code.append(instCode);
             if(inst.getInstType() == InstructionType.CALL && !(((CallInstruction) inst).getReturnType().getTypeOfElement() == ElementType.VOID))
-                code.append("pop").append(NL);
+                code.append(TAB).append("pop").append(NL);
         }
 
         code.append(".end method\n");
@@ -185,7 +184,7 @@ public class JasminGenerator {
     private String transformType(Type methodType) {
         var code= new StringBuilder();
         if (methodType.getTypeOfElement() == ElementType.OBJECTREF){
-            code.append(getImportedClassName(methodType.toString())).append(";");
+            code.append("L").append(getImportedClassName(((ClassType)methodType).getName())).append(";");
             return code.toString();
         } else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
             return "[" + transformArray(((ArrayType) methodType).getElementType()) + ";";
@@ -215,7 +214,7 @@ public class JasminGenerator {
             case "BOOLEAN": return "Z";
             case "STRING": return "Ljava/lang/String;";
             case "VOID": return "V";
-            default: return string;
+            default: return null;
         }
     }
 
@@ -385,6 +384,7 @@ public class JasminGenerator {
                 }
 
                 var methodName2 = second.getLiteral().replace("\"","");
+
                 code.append(type).append(" ").append(getImportedClassName(((ClassType) first.getType()).getName())).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
             }
             case "invokestatic" -> {
@@ -415,15 +415,12 @@ public class JasminGenerator {
     }
     private String getImportedClassName(String className) {
 
-        if(className.contains("OBJECTREF")){
-            className= className.split("\\(")[1].replace(")","");
-        }
         if (className.equals("this"))
             return classUnit.getClassName();
 
         for (String imported : this.classUnit.getImports()) {
             if (imported.endsWith(className)) {
-                return imported.replaceAll("\\.","/");
+                return imported.replace(".","/");
             }
         }
 
