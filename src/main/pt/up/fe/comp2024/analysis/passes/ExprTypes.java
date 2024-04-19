@@ -64,6 +64,12 @@ public class ExprTypes extends AnalysisVisitor {
         for (var expr : expressions) {
             String name = "";
             Type type;
+            if(expr.getKind().equals("ParenExpr")) {
+                for(var child: expr.getChildren()){
+                    visitBinaryExpr(child,table);
+                }
+                continue;
+            }
             if (expr.hasAttribute("name")) {
                 name = expr.get("name");
             } else if (expr.hasAttribute("value")){
