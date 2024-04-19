@@ -182,6 +182,7 @@ public class JasminGenerator {
             code.append("L");
             if(methodType.getTypeOfElement() == ElementType.THIS){
                 code.append(ollirResult.getOllirClass().getClassName());
+                return code.toString();
             }
             else {
                 for (String importedClass : ollirResult.getOllirClass().getImports()) {
