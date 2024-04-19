@@ -79,13 +79,21 @@ public class JasminGenerator {
         code.append(".super java/lang/Object").append(NL);
         var fieldsList = classUnit.getFields();
         for(var field: fieldsList){
+            var final_f="";
+            var static_f="";
+            if(field.isFinalField()){
+                final_f= "final ";
+            }
+            if(field.isStaticField()){
+                static_f="static ";
+            }
             if(field.getFieldAccessModifier()== AccessModifier.PRIVATE){
-                code.append(".field ").append("private ").append(field.getFieldName()).append(" ");
+                code.append(".field ").append("private ").append(final_f).append(static_f).append(field.getFieldName()).append(" ");
             }
             else if(field.getFieldAccessModifier() == AccessModifier.PROTECTED){
-                code.append(".field ").append("protected ").append(field.getFieldName()).append(" ");
+                code.append(".field ").append("protected ").append(final_f).append(static_f).append(field.getFieldName()).append(" ");
             }
-            else code.append(".field ").append("public ").append(field.getFieldName()).append(" ");
+            else code.append(".field ").append("public ").append(final_f).append(static_f).append(field.getFieldName()).append(" ");
             code.append(transformType(field.getFieldType())).append(NL);
         }
         // generate a single constructor method
@@ -135,12 +143,17 @@ public class JasminGenerator {
         for(var param: methodParameters){
             params.append(transformType(param.getType()));
         }
+
         var static_m="";
         if(method.isStaticMethod()){
             static_m="static ";
         }
+        var final_m="";
+        if(method.isFinalMethod()){
+            final_m="final ";
+        }
 
-        code.append("\n.").append(method.isFinalMethod() ? "final method" : "method ").append(modifier).append(static_m).append(methodName).append("(").append(params).append(")").append(transformType(methodType)).append(NL);
+        code.append("\n.").append(method.isFinalMethod() ? "final method" : "method ").append(modifier).append(static_m).append(final_m).append(methodName).append("(").append(params).append(")").append(transformType(methodType)).append(NL);
 
         // Add limits
         code.append(TAB).append(".limit stack 99").append(NL);
@@ -325,81 +338,92 @@ public class JasminGenerator {
     private String generateCallInstruction(CallInstruction callInstruction) {
         var code = new StringBuilder();
         var type = callInstruction.getInvocationType().toString();
-        var methodName = "";
         Operand first = (Operand) callInstruction.getOperands().get(0);
-        if(callInstruction.getCaller().getType().getTypeOfElement().toString().equals("OBJECTREF")){
-            for(var imps:ollirResult.getOllirClass().getImports()){
-                if(imps.endsWith("."+callInstruction.getCaller().getType().toString().split("\\(")[1].replace(")",""))){
-                    methodName = imps.replace(".","/");
-                }
-            }
-            if(methodName.isEmpty()){
-                methodName = callInstruction.getCaller().getType().toString().split("\\(")[1].replace(")","");
-            }
+        Type spe= first.getType();
+        var methodName="";
+
+        if(spe.getTypeOfElement() == ElementType.OBJECTREF){
+            methodName=((ClassType) spe).getName();
         }
-        else methodName = callInstruction.getCaller().getType().toString().split("\\(")[1].replace(")","");
-        var op= callInstruction.getCaller().getType().getTypeOfElement();
-        if (type.equals("NEW") ) {
-            code.append("new ").append(methodName).append(NL);
-            code.append("dup").append(NL);
-
-
-        } else if (type.equals("invokespecial")){
-            code.append(generateOperand((Operand)callInstruction.getOperands().get(0)));
-            code.append("invokespecial ").append(methodName).append("/<init>()V").append(NL);
-            code.append("pop").append(NL);
-        }
-        else if ( type.equals("invokevirtual")){
-            StringBuilder parameters= new StringBuilder();
-
-            for (Element staticElement : callInstruction.getOperands()){
-                if(staticElement.toString().equals(callInstruction.getMethodName().toString())){
-                    continue;
-                }
-                if(staticElement instanceof LiteralElement) code.append(generateLiteral((LiteralElement) staticElement));
-                else if(staticElement instanceof Operand) code.append(generateOperand((Operand) staticElement));
-            }
-
-            for(var param: callInstruction.getArguments()){
-                parameters.append(transformType(param.getType()));
-            }
-
-            var methodName2 = callInstruction.getMethodName().toString().split(":")[1].split("\\.")[0].replace("\"","").replace(" ","");
-            code.append(type).append(" ").append(methodName).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
-        } else {
-            var parameters= new StringBuilder();
-            for(var param: callInstruction.getArguments()){
-                parameters.append(transformType(param.getType()));
-            }
-
-            for (Element staticElement : callInstruction.getOperands()){
-                if(staticElement.toString().equals(callInstruction.getMethodName().toString())){
-                    continue;
-                }
-                if(staticElement instanceof LiteralElement) code.append(generateLiteral((LiteralElement) staticElement));
-                if(staticElement instanceof Operand) code.append(generateOperand((Operand) staticElement));
-            }
-
-            code.append("invokestatic ");
-            if(first.getType().toString().equals("THIS")){
-                code.append(currentMethod.getOllirClass().getClassName());
+        else {
+            if(spe.getTypeOfElement() == ElementType.THIS){
+                methodName=ollirResult.getOllirClass().getClassName();
             }
             else {
                 for(var imp: ollirResult.getOllirClass().getImports()){
-                    if(imp.endsWith(first.getName())){
-                        var aux= imp.replace("\\.","/");
-                        code.append(aux);
+                    if(imp.endsWith(((ClassType) spe).getName())){
+                        methodName= imp.replace("\\.","/");
                         break;
                     }
                 }
             }
-            LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
-            code.append("/").append(second.getLiteral().replace("\"",""))
-                    .append("(")
-                    .append(parameters)
-                    .append(")")
-                    .append(transformType(callInstruction.getReturnType()))
-                    .append(NL);
+        }
+
+        switch (type) {
+            case "NEW" -> {
+                code.append("new ").append(methodName).append(NL);
+                code.append("dup").append(NL);
+            }
+            case "invokespecial" -> {
+
+                code.append(generateOperand((Operand) callInstruction.getOperands().get(0)));
+                code.append("invokespecial ").append(methodName).append("/<init>()V").append(NL);
+                code.append("pop").append(NL);
+            }
+            case "invokevirtual" -> {
+                LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
+                StringBuilder parameters = new StringBuilder();
+                for (Element staticElement : callInstruction.getOperands()) {
+                    if (staticElement.toString().equals(callInstruction.getMethodName().toString())) {
+                        continue;
+                    }
+                    if (staticElement instanceof LiteralElement)
+                        code.append(generateLiteral((LiteralElement) staticElement));
+                    else if (staticElement instanceof Operand) code.append(generateOperand((Operand) staticElement));
+                }
+
+                for (var param : callInstruction.getArguments()) {
+                    parameters.append(transformType(param.getType()));
+                }
+
+                var methodName2 = second.getLiteral().replace("\"","");
+                code.append(type).append(" ").append(methodName).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
+            }
+            default -> {
+                LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
+                var parameters = new StringBuilder();
+                for (var param : callInstruction.getArguments()) {
+                    parameters.append(transformType(param.getType()));
+                }
+
+                for (Element staticElement : callInstruction.getOperands()) {
+                    if (staticElement.toString().equals(callInstruction.getMethodName().toString())) {
+                        continue;
+                    }
+                    if (staticElement instanceof LiteralElement)
+                        code.append(generateLiteral((LiteralElement) staticElement));
+                    if (staticElement instanceof Operand) code.append(generateOperand((Operand) staticElement));
+                }
+
+                code.append("invokestatic ");
+                if (first.getType().toString().equals("THIS")) {
+                    code.append(currentMethod.getOllirClass().getClassName());
+                } else {
+                    for (var imp : ollirResult.getOllirClass().getImports()) {
+                        if (imp.endsWith(first.getName())) {
+                            var aux = imp.replace("\\.", "/");
+                            code.append(aux);
+                            break;
+                        }
+                    }
+                };
+                code.append("/").append(second.getLiteral().replace("\"", ""))
+                        .append("(")
+                        .append(parameters)
+                        .append(")")
+                        .append(transformType(callInstruction.getReturnType()))
+                        .append(NL);
+            }
         }
         return code.toString();
     }
