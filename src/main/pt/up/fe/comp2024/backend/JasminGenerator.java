@@ -163,9 +163,9 @@ public class JasminGenerator {
             var instCode = StringLines.getLines(generators.apply(inst)).stream()
                     .collect(Collectors.joining(NL + TAB, TAB, NL));
 
-            if(inst.getInstType().toString().equals("CALL") && !((CallInstruction) inst).getReturnType().getTypeOfElement().toString().equals("VOID"))
-                code.append("pop").append(NL);
             code.append(instCode);
+            if(inst.getInstType() == InstructionType.CALL && !(((CallInstruction) inst).getReturnType().getTypeOfElement() == ElementType.VOID))
+                code.append("pop").append(NL);
         }
 
         code.append(".end method\n");
