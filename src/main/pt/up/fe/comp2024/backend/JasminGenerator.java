@@ -78,7 +78,6 @@ public class JasminGenerator {
                 "";
         code.append(".class ").append(modifier).append(className).append(NL);
 
-        // TODO: Hardcoded to Object, needs to be expanded
         code.append(".super ");
         if (classUnit.getSuperClass() == null || classUnit.getSuperClass().equals("Object")) {
             code.append("java/lang/Object").append(NL);
@@ -186,8 +185,7 @@ public class JasminGenerator {
     private String transformType(Type methodType) {
         var code= new StringBuilder();
         if (methodType.getTypeOfElement() == ElementType.OBJECTREF){
-            code.append("L");
-            code.append(getImportedClassName(methodType.getTypeOfElement().toString())).append(";");
+            code.append(getImportedClassName(methodType.getTypeOfElement().toString()));
             return code.toString();
         } else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
             return "[" + transformType(((ArrayType) methodType).getElementType());
