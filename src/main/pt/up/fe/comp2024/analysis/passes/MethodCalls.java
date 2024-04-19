@@ -167,16 +167,21 @@ public class MethodCalls extends AnalysisVisitor {
             while (i < parameterNodes.size()) {
                 // if parameter types are different, create error report
                 if (!TypeUtils.getExprType(parameterNodes.get(i), table).equals(parameterTypes.get(j))) {
-                    // Create error report
-                    var message = String.format("Method '%s' parameter types are incompatible", methodName);
-                    addReport(Report.newError(
-                            Stage.SEMANTIC,
-                            NodeUtils.getLine(funcExpr),
-                            NodeUtils.getColumn(funcExpr),
-                            message,
-                            null)
-                    );
-                    return;
+                    // if this type is varargs and this parameter is the start of varargs and an array, types are compatible
+                    if (!(i == j && j == parameterNodes.size() - 1 &&
+                            TypeUtils.getExprType(parameterNodes.get(i), table)
+                                    .equals(new Type(TypeUtils.getIntTypeName(), true)))) {
+                        // Create error report
+                        var message = String.format("Method '%s' parameter types are incompatible", methodName);
+                        addReport(Report.newError(
+                                Stage.SEMANTIC,
+                                NodeUtils.getLine(funcExpr),
+                                NodeUtils.getColumn(funcExpr),
+                                message,
+                                null)
+                        );
+                        return;
+                    }
                 }
                 // if current parameter is not varArgs
                 if (j < parameterTypes.size() - 1) {

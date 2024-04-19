@@ -14,7 +14,7 @@ import pt.up.fe.specs.util.SpecsCheck;
 
 import java.util.Objects;
 
-public class BinaryExprTypes extends AnalysisVisitor {
+public class ExprTypes extends AnalysisVisitor {
 
     private String currentMethod;
 
@@ -22,6 +22,7 @@ public class BinaryExprTypes extends AnalysisVisitor {
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.BINARY_EXPR, this::visitBinaryExpr);
+        addVisit(Kind.NOT_EXPR, this::visitNotExpr);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
@@ -31,6 +32,26 @@ public class BinaryExprTypes extends AnalysisVisitor {
 
     private Void visitBinaryExpr(JmmNode binaryExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
+
+        String operator = binaryExpr.get("op");
+        Type intOrBoolean = null;
+        switch (operator) {
+            case "+", "*", "-", "/", "<", ">", "<=", ">=" -> intOrBoolean = new Type(TypeUtils.getIntTypeName(), false);
+            case "&&", "||", "!" -> intOrBoolean = new Type(TypeUtils.getBooleanTypeName(), false);
+        }
+        if (intOrBoolean != null && !TypeUtils.getExprType(binaryExpr.getChild(0), table).equals(intOrBoolean)) {
+            // Create error report
+            var message = String.format("Invalid operation: operator '%s' requires '%s' types.", operator, intOrBoolean.getName());
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(binaryExpr),
+                    NodeUtils.getColumn(binaryExpr),
+                    message,
+                    null)
+            );
+
+            return null;
+        }
 
         // Get members of expression
         var expressions = binaryExpr.getChildren();
@@ -119,6 +140,27 @@ public class BinaryExprTypes extends AnalysisVisitor {
                 Stage.SEMANTIC,
                 NodeUtils.getLine(binaryExpr),
                 NodeUtils.getColumn(binaryExpr),
+                message,
+                null)
+        );
+
+        return null;
+    }
+
+    private Void visitNotExpr(JmmNode notExpr, SymbolTable table) {
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
+
+        // if type of expr is boolean, it's correct
+        if (TypeUtils.getExprType(notExpr, table)
+                .equals(new Type(TypeUtils.getBooleanTypeName(), false)))
+            return null;
+
+        // Create error report
+        var message = "Invalid operation: '!' can only be used on boolean expressions.";
+        addReport(Report.newError(
+                Stage.SEMANTIC,
+                NodeUtils.getLine(notExpr),
+                NodeUtils.getColumn(notExpr),
                 message,
                 null)
         );

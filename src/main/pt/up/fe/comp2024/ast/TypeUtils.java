@@ -4,6 +4,7 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
+import pt.up.fe.comp2024.JavammParser;
 
 import javax.lang.model.element.TypeElement;
 import java.util.List;
@@ -33,14 +34,13 @@ public class TypeUtils {
      * @return
      */
     public static Type getExprType(JmmNode expr, SymbolTable table) {
-        // TODO: Simple implementation that needs to be expanded
 
         var kind = Kind.fromString(expr.getKind());
 
 
 
         Type type = switch (kind) {
-            case PAREN_EXPR -> getExprType(expr.getChild(0), table);
+            case PAREN_EXPR, NOT_EXPR -> getExprType(expr.getChild(0), table);
             case BINARY_EXPR -> getBinExprType(expr);
             case VAR_REF_EXPR -> getVarExprType(expr, table);
             case NEW_CLASS_EXPR -> getTypeFromString(expr.getParent().get("name"), expr, table);
@@ -62,7 +62,7 @@ public class TypeUtils {
 
         return switch (operator) {
             case "+", "*", "-", "/" -> new Type(INT_TYPE_NAME, false);
-            case "&&", "||", "<", ">", "<=", ">=", "!" -> new Type(BOOLEAN_TYPE_NAME, false);
+            case "&&", "||", "<", ">", "<=", ">=", "!", "==", "!=" -> new Type(BOOLEAN_TYPE_NAME, false);
             default ->
                     throw new RuntimeException("Unknown operator '" + operator + "' of expression '" + binaryExpr + "'");
         };
