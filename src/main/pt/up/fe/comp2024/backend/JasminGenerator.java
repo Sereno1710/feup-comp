@@ -79,7 +79,9 @@ public class JasminGenerator {
         code.append(".class ").append(modifier).append(className).append(NL);
 
         // TODO: Hardcoded to Object, needs to be expanded
-        code.append(".super java/lang/Object").append(NL);
+
+        classUnit.setSuperClass(classUnit.getSuperClass()== null || classUnit.getSuperClass().equals("Object")? "java/lang/Object" : getImportedClassName(classUnit.getSuperClass()));;
+        code.append(".super ").append(classUnit.getSuperClass()).append(NL);
         var fieldsList = classUnit.getFields();
         for(var field: fieldsList){
             var final_f="";
@@ -398,7 +400,7 @@ public class JasminGenerator {
 
         for (String imported : this.classUnit.getImports()) {
             if (imported.endsWith(className)) {
-                return imported.replace(".","/");
+                return imported.replaceAll("\\.","/");
             }
         }
 
