@@ -33,6 +33,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         addVisit(INTEGER_LITERAL, this::visitInteger);
         addVisit(FUNC_EXPR, this::visitFuncExpr);
         addVisit(NEW_CLASS_EXPR, this::visitNewClassExpr);
+        addVisit(BOOLEAN_LITERAL, this::visitBoolean);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -42,6 +43,19 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         var intType = new Type(TypeUtils.getIntTypeName(), false);
         String ollirIntType = OptUtils.toOllirType(intType);
         String code = node.get("value") + ollirIntType;
+        return new OllirExprResult(code);
+    }
+
+    private OllirExprResult visitBoolean(JmmNode node, Void unused) {
+        var boolType = new Type("bool", false);
+        String ollirIntType = OptUtils.toOllirType(boolType);
+        String value = node.get("value");
+        if(Objects.equals(value, "true")) {
+            value = "1";
+        } else if(Objects.equals(value, "false")) {
+            value = "0";
+        }
+        String code = value + ollirIntType;
         return new OllirExprResult(code);
     }
 
@@ -106,9 +120,10 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
 
         for (int i = 1; i < node.getNumChildren(); i++) {
             var child = node.getJmmChild(i);
-            var childCode = visit(child).getCode();
+            var childCode = visit(child);
             funcParamsCode.append(", ");
-            funcParamsCode.append(childCode);
+            funcParamsCode.append(childCode.getCode());
+            computation.append(childCode.getComputation());
         }
 
         if (importedLib) {
