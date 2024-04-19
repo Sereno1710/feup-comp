@@ -181,7 +181,7 @@ public class JasminGenerator {
         if (methodType.getTypeOfElement() == ElementType.OBJECTREF){
             code.append("L");
             if(methodType.getTypeOfElement() == ElementType.THIS){
-                code.append(ollirResult.getOllirClass().getClassName());
+                code.append(ollirResult.getOllirClass().getClassName()).append(";");
                 return code.toString();
             }
             else {
