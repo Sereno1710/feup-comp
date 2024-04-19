@@ -34,7 +34,7 @@ public class JasminGenerator {
 
     public JasminGenerator(OllirResult ollirResult) {
         this.ollirResult = ollirResult;
-
+        classUnit = this.ollirResult.getOllirClass();
         reports = new ArrayList<>();
         code = null;
         currentMethod = null;
@@ -338,39 +338,24 @@ public class JasminGenerator {
     private String generateCallInstruction(CallInstruction callInstruction) {
         var code = new StringBuilder();
         var type = callInstruction.getInvocationType().toString();
-        var a= callInstruction.getCaller().getType().getTypeOfElement();
+        var a= ((Operand) callInstruction.getCaller()).getType();
         Operand first = (Operand) callInstruction.getOperands().get(0);
-        Type spe= first.getType();
         var methodName="";
-
-        if(a == ElementType.OBJECTREF){
-            methodName=((ClassType) spe).getName();
-        }
-        else {
-            if(a == ElementType.THIS){
-                methodName=ollirResult.getOllirClass().getClassName();
-            }
-            else {
-                for(var imp: ollirResult.getOllirClass().getImports()){
-                    if(imp.endsWith(((ClassType) spe).getName())){
-                        methodName= imp.replace("\\.","/");
-                        break;
-                    }
-                }
-            }
-        }
 
         switch (type) {
             case "NEW" -> {
+                for (Element elem : callInstruction.getArguments())
+                    code.append(generators.apply(elem));
+                methodName = getImportedClassName(((Operand) callInstruction.getCaller()).getName());
                 code.append("new ").append(methodName).append(NL);
                 code.append("dup").append(NL);
             }
             case "invokespecial" -> {
-                if(a == ElementType.THIS)
+                code.append(generators.apply(first)).append(NL);
+                if(a.getTypeOfElement() == ElementType.THIS)
                     methodName = ollirResult.getOllirClass().getSuperClass();
-
-                for (var arg : callInstruction.getArguments()) {
-                    code.append(generators.apply(arg));
+                else {
+                    methodName = getImportedClassName(((ClassType) a).getName());
                 }
                 var param="";
                 for (var arg : callInstruction.getArguments()) {
@@ -381,8 +366,12 @@ public class JasminGenerator {
                 code.append("pop").append(NL);
             }
             case "invokevirtual" -> {
+                code.append(generators.apply(first)).append(NL);
                 LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
                 StringBuilder parameters = new StringBuilder();
+                for (var op : callInstruction.getArguments()) {
+                    code.append(generators.apply(op));
+                }
                 for (Element staticElement : callInstruction.getOperands()) {
                     if (staticElement.toString().equals(callInstruction.getMethodName().toString())) {
                         continue;
@@ -396,36 +385,21 @@ public class JasminGenerator {
                 }
 
                 var methodName2 = second.getLiteral().replace("\"","");
-                code.append(type).append(" ").append(methodName).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
+                code.append(type).append(" ").append(getImportedClassName(((ClassType) first.getType()).getName())).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
             }
-            default -> {
+            case "invokestatic" -> {
+                code.append(generators.apply(first)).append(NL);
                 LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
                 var parameters = new StringBuilder();
+                for (var op : callInstruction.getArguments()) {
+                    code.append(generators.apply(op));
+                }
                 for (var param : callInstruction.getArguments()) {
                     parameters.append(transformType(param.getType()));
                 }
 
-                for (Element staticElement : callInstruction.getOperands()) {
-                    if (staticElement.toString().equals(callInstruction.getMethodName().toString())) {
-                        continue;
-                    }
-                    if (staticElement instanceof LiteralElement)
-                        code.append(generateLiteral((LiteralElement) staticElement));
-                    if (staticElement instanceof Operand) code.append(generateOperand((Operand) staticElement));
-                }
-
                 code.append("invokestatic ");
-                if (first.getType().toString().equals("THIS")) {
-                    code.append(currentMethod.getOllirClass().getClassName());
-                } else {
-                    for (var imp : ollirResult.getOllirClass().getImports()) {
-                        if (imp.endsWith(first.getName())) {
-                            var aux = imp.replace("\\.", "/");
-                            code.append(aux);
-                            break;
-                        }
-                    }
-                };
+                code.append(getImportedClassName(generators.apply(callInstruction.getCaller())));
                 code.append("/").append(second.getLiteral().replace("\"", ""))
                         .append("(")
                         .append(parameters)
@@ -435,5 +409,21 @@ public class JasminGenerator {
             }
         }
         return code.toString();
+    }
+    private String getImportedClassName(String basicClassName) {
+
+        // .this object
+        if (basicClassName.equals("this"))
+            return ollirResult.getOllirClass().getClassName();
+
+        // imported object
+        for (String importedClass : this.classUnit.getImports()) {
+            if (importedClass.endsWith(basicClassName)) {
+                return importedClass.replace("\\.","/");
+            }
+        }
+
+        // default object name
+        return basicClassName;
     }
 }
