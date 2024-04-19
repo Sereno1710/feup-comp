@@ -240,8 +240,6 @@ public class JasminGenerator {
 
             code.append(value == -1 ?  "m1" : value).append(NL);
         }
-        else if (literal.getType().getTypeOfElement().toString().equals("STRING") || literal.getType().getTypeOfElement().toString().equals("OBJECTREF") || literal.getType().getTypeOfElement().toString().equals("ARRAYREF"))
-            code.append("ldc ").append(literal.getLiteral()).append(NL);
         return code.toString();
     }
 
