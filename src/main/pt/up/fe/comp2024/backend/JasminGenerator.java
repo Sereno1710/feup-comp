@@ -180,17 +180,7 @@ public class JasminGenerator {
         var code= new StringBuilder();
         if (methodType.getTypeOfElement() == ElementType.OBJECTREF){
             code.append("L");
-            if(methodType.getTypeOfElement() == ElementType.THIS){
-                code.append(ollirResult.getOllirClass().getClassName());
-            }
-            else {
-                for (String importedClass : ollirResult.getOllirClass().getImports()) {
-                    if (importedClass.endsWith(((ClassType) methodType).getName())) {
-                          code.append((((ClassType) methodType).getName()).replace("\\.","/"));
-                          break;
-                    }
-                }
-            }
+            code.append(getImportedClassName(methodType.getTypeOfElement().toString())).append(";");
             return code.toString();
         } else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
             return "[" + transformType(((ArrayType) methodType).getElementType());
