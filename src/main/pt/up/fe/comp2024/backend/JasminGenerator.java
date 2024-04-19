@@ -185,7 +185,7 @@ public class JasminGenerator {
     private String transformType(Type methodType) {
         var code= new StringBuilder();
         if (methodType.getTypeOfElement() == ElementType.OBJECTREF){
-            code.append(getImportedClassName(methodType.getTypeOfElement().toString())).append(";");
+            code.append(getImportedClassName(methodType.toString())).append(";");
             return code.toString();
         } else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
             return "[" + transformArray(((ArrayType) methodType).getElementType()) + ";";
@@ -415,6 +415,9 @@ public class JasminGenerator {
     }
     private String getImportedClassName(String className) {
 
+        if(className.contains("OBJECTREF")){
+            className= className.split("\\(")[1].replace(")","");
+        }
         if (className.equals("this"))
             return classUnit.getClassName();
 
