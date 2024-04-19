@@ -104,6 +104,13 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
             }
         }
 
+        for (int i = 1; i < node.getNumChildren(); i++) {
+            var child = node.getJmmChild(i);
+            var childCode = visit(child).getCode();
+            funcParamsCode.append(", ");
+            funcParamsCode.append(childCode);
+        }
+
         if (importedLib) {
             code.append("invokestatic(");
             code.append(libName);
@@ -125,12 +132,6 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
             computation.append(code).append(SPACE)
                     .append(ASSIGN).append(resOllirType).append(SPACE);
 
-            for (int i = 1; i < node.getNumChildren(); i++) {
-                var child = node.getJmmChild(i);
-                var childCode = visit(child).getCode();
-                funcParamsCode.append(", ");
-                funcParamsCode.append(childCode);
-            }
             computation.append("invokevirtual(");
             computation.append(libName);
             computation.append(classOllirType);
