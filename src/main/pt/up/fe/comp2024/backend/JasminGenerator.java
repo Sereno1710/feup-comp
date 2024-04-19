@@ -82,7 +82,7 @@ public class JasminGenerator {
         code.append(".super ");
         if (classUnit.getSuperClass() == null || classUnit.getSuperClass().equals("Object")) {
             code.append("java/lang/Object").append(NL);
-            code.append(";default constructor");
+
         } else {
             code.append(getImportedClassName(classUnit.getSuperClass())).append(NL);
         }
@@ -105,8 +105,18 @@ public class JasminGenerator {
 
             code.append(transformType(field.getFieldType())).append(NL);
         }
-
-
+        // generate a single constructor method
+        if(classUnit.getSuperClass() == null || classUnit.getSuperClass().equals("Object")) {
+            var defaultConstructor = """
+                    ;default constructor
+                    .method public <init>()V
+                        aload_0
+                        invokespecial java/lang/Object/<init>()V
+                        return
+                    .end method
+                    """;
+            code.append(defaultConstructor);
+        }
         // generate code for all other methods
         for (var method : ollirResult.getOllirClass().getMethods()) {
 
