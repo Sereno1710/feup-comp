@@ -188,11 +188,27 @@ public class JasminGenerator {
             code.append(getImportedClassName(methodType.getTypeOfElement().toString())).append(";");
             return code.toString();
         } else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
-            return "[" + transformType(((ArrayType) methodType).getElementType());
+            return "[" + transformArray(((ArrayType) methodType).getElementType()) + ";";
         }
         return transformString(methodType.toString());
     }
-
+    private String transformArray(Type methodType ) {
+        var code = new StringBuilder();
+        if (methodType.getTypeOfElement() == ElementType.OBJECTREF) {
+            code.append(getImportedClassName(methodType.getTypeOfElement().toString())).append(";");
+            return code.toString();
+        }
+        else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
+            return "[" + transformArray(((ArrayType) methodType).getElementType());
+        }
+        switch (methodType.toString()){
+            case "INT32": return "I";
+            case "BOOLEAN": return "Z";
+            case "STRING": return "Ljava/lang/String";
+            case "VOID": return "V";
+            default: return null;
+        }
+    }
     private String transformString(String string) {
         switch (string){
             case "INT32": return "I";
