@@ -28,6 +28,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         addVisit(VAR_REF_EXPR, this::visitVarRef);
         addVisit(BINARY_EXPR, this::visitBinExpr);
         addVisit(INTEGER_LITERAL, this::visitInteger);
+        addVisit(FUNC_EXPR, this::visitFuncExpr);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -80,6 +81,34 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         return new OllirExprResult(code);
     }
 
+    private OllirExprResult visitFuncExpr(JmmNode node, Void unused) {
+        var classChainExpr = node.getJmmChild(0);
+        String libName = classChainExpr.get("_tset61");
+        String functionName = classChainExpr.get("ID");
+
+        StringBuilder code = new StringBuilder();
+        StringBuilder funcParamsCode = new StringBuilder();
+
+        for (int i = 1; i < node.getNumChildren(); i++) {
+            var child = node.getJmmChild(i);
+            var childCode = visit(child).getCode();
+            funcParamsCode.append(", ");
+            funcParamsCode.append(childCode);
+        }
+
+        code.append("invokestatic(");
+        code.append(libName);
+        code.append(", \"");
+        code.append(functionName);
+        code.append("\"");
+        code.append(funcParamsCode);
+        code.append(").V");
+        code.append(END_STMT);
+
+        return new OllirExprResult(code.toString());
+    }
+
+
     /**
      * Default visitor. Visits every child node and return an empty result.
      *
@@ -88,12 +117,13 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
      * @return
      */
     private OllirExprResult defaultVisit(JmmNode node, Void unused) {
+        StringBuilder code = new StringBuilder();
 
         for (var child : node.getChildren()) {
-            visit(child);
+            code.append(visit(child).getCode());
         }
 
-        return OllirExprResult.EMPTY;
+        return new OllirExprResult(code.toString());
     }
 
 }
