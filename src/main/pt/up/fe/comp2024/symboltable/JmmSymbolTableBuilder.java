@@ -17,9 +17,11 @@ public class JmmSymbolTableBuilder {
 
     public static JmmSymbolTable build(JmmNode root) {
 
-        List<String> importStrings = new ArrayList<>();
+        List<String> imports = new ArrayList<>();
         List<JmmNode> importDecls = root.getChildren(IMPORT_DECL);
-        importDecls.forEach(importDecl -> importStrings.add(importDecl.getObjectAsList("value", String.class).toString()));
+        importDecls.forEach(importDecl -> {
+            imports.add(String.join(".", importDecl.getObjectAsList("value", String.class)));
+        });
 
         JmmNode classDecl = root.getChild(root.getNumChildren() - 1);
 
@@ -32,7 +34,7 @@ public class JmmSymbolTableBuilder {
         var sup = buildSuper(classDecl);
         var fields = buildFields(classDecl);
 
-        return new JmmSymbolTable(className, methods, returnTypes, params, locals, importStrings, sup, fields);
+        return new JmmSymbolTable(className, methods, returnTypes, params, locals, imports, sup, fields);
     }
 
     private static Map<String, Type> buildReturnTypes(JmmNode classDecl) {
