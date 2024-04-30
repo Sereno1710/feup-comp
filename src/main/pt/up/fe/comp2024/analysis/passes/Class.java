@@ -245,15 +245,22 @@ public class Class extends AnalysisVisitor {
     private Void visitClassChainExpr(JmmNode classChainExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
+        List<String> classAndFuncNames = classChainExpr.getObjectAsList("className", String.class);
+        List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
+        String classNameLiteral = classNames.get(classNames.size() - 1);
+
+        Type type = TypeUtils.getClassFromClassChain(classChainExpr, table);
+        String className;
+        if (type != null) {
+            className = type.getName();
+        } else {
+            className = classNameLiteral;
+        }
+
         // if method is static, can't use 'this'
         if (Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
-            // Check if there is an import with the same name as class used
-            List<String> classAndFuncNames = classChainExpr.getObjectAsList("className", String.class);
-            List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
-            String name = classNames.get(classNames.size() - 1);
-
             // if name is 'this'
-            if (name.equals("this")) {
+            if (classNameLiteral.equals("this")) {
                 // Create error report
                 var message = String.format("Can't use 'this' in static method: '%s'", currentMethod);
                 addReport(Report.newError(
@@ -266,14 +273,6 @@ public class Class extends AnalysisVisitor {
 
                 return null;
             }
-        }
-
-        Type type = TypeUtils.getClassFromClassChain(classChainExpr, table);
-        String className;
-        if (type != null) {
-            className = type.getName();
-        } else {
-            className = "";
         }
 
         // Class is class in file, return
