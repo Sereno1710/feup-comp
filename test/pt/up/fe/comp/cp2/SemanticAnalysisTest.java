@@ -283,4 +283,20 @@ public class SemanticAnalysisTest {
         TestUtils.mustFail(result);
         System.out.println(result.getReports());
     }
+
+    @Test
+    public void mainEverywehereOk() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/MainEverywhereOk.jmm"));
+        System.out.println(result.getReports());
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void mainImportOk() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/MainImportOk.jmm"));
+        System.out.println(result.getReports());
+        TestUtils.noErrors(result);
+    }
 }
