@@ -88,7 +88,7 @@ type
     ;
 
 methodDecl locals[boolean isPublic=false, boolean isStatic=false]
-    : (PUBLIC {$isPublic=true;})? ('static' {$isStatic=true;})? type name='main' LPAREN param RPAREN
+    : (PUBLIC {$isPublic=true;})? ('static' {$isStatic=true;}) type name='main' LPAREN param RPAREN
               LCURLY
               varDecl* stmt*
               RCURLY

@@ -21,7 +21,7 @@ public class Class extends AnalysisVisitor {
 
     private String currentMethod;
     private JmmNode currentMethodNode;
-    private List<String> lastImports = new ArrayList<>();
+    private final List<String> lastImports = new ArrayList<>();
 
     @Override
     public void buildVisitor() {
@@ -35,6 +35,7 @@ public class Class extends AnalysisVisitor {
         List<JmmNode> methods = classDecl.getDescendants(Kind.METHOD_DECL);
         Map<String, String> methodMap = new HashMap<>();
         for (JmmNode method : methods) {
+            // if there's a duplicate method
             if (methodMap.containsKey(method.get("name"))) {
                 // Create error report
                 var message = String.format("Method '%s' was already defined.", method.get("name"));
@@ -48,6 +49,24 @@ public class Class extends AnalysisVisitor {
 
                 return null;
             }
+            // if main has the wrong arguments
+            if (method.get("name").equals("main") &&
+                    !(method.getChild(1).getChild(0).get("name")
+                            .equals(TypeUtils.getStringTypeName()) &&
+                            method.getChild(1).getChild(0).hasAttribute("array"))) {
+                // Create error report
+                var message = "Method main has the wrong arguments";
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(method),
+                        NodeUtils.getColumn(method),
+                        message,
+                        null)
+                );
+
+                return null;
+            }
+
             methodMap.put(method.get("name"), "a");
         }
 
