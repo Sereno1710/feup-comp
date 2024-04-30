@@ -24,6 +24,7 @@ public class ExprTypes extends AnalysisVisitor {
         addVisit(Kind.BINARY_EXPR, this::visitBinaryExpr);
         addVisit(Kind.NEW_CLASS_EXPR, this::visitNewClassExpr);
         addVisit(Kind.NOT_EXPR, this::visitNotExpr);
+        addVisit(Kind.LENGTH_EXPR, this::visitLengthExpr);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
@@ -192,6 +193,27 @@ public class ExprTypes extends AnalysisVisitor {
                 message,
                 null)
         );
+
+        return null;
+    }
+
+    private Void visitLengthExpr(JmmNode lengthExpr, SymbolTable table) {
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
+
+        // if length is used on something that is not an array, add an error
+        if (!TypeUtils.getExprType(lengthExpr.getChild(0), table).isArray()) {
+            // Create error report
+            var message = "Invalid operation: 'length' can only be used on arrays.";
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(lengthExpr),
+                    NodeUtils.getColumn(lengthExpr),
+                    message,
+                    null)
+            );
+
+            return null;
+        }
 
         return null;
     }
