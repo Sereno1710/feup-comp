@@ -13,16 +13,17 @@ import pt.up.fe.specs.util.SpecsCheck;
 public class Variable extends AnalysisVisitor {
 
     private String currentMethod;
+    private JmmNode currentMethodNode;
 
     @Override
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.VAR_REF_EXPR, this::visitVarRefExpr);
-        addVisit(Kind.NEW_CLASS_EXPR, this::visitNewClassExpr);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
         currentMethod = method.get("name");
+        currentMethodNode = method;
         return null;
     }
 
@@ -32,9 +33,10 @@ public class Variable extends AnalysisVisitor {
         // Check if exists a parameter or variable declaration with the same name as the variable reference
         var varRefName = varRefExpr.get("name");
 
-        // Var is a field, return
+        // Var is a field and method is not static, return
         if (table.getFields().stream()
-                .anyMatch(param -> param.getName().equals(varRefName))) {
+                .anyMatch(param -> param.getName().equals(varRefName)) &&
+                !Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
             return null;
         }
 
@@ -62,26 +64,4 @@ public class Variable extends AnalysisVisitor {
 
         return null;
     }
-
-    private Void visitNewClassExpr(JmmNode newClassExpr, SymbolTable table) {
-        SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
-        String varName = newClassExpr.getParent().get("name");
-
-        // if classes match in initializations, return
-        if (TypeUtils.getTypeFromString(varName, newClassExpr, table)
-                .equals(TypeUtils.getTypeFromTypeString(newClassExpr.get("name"))))
-            return null;
-
-        var message = String.format("Variable '%s' has an invalid initialization.", varName);
-        addReport(Report.newError(
-                Stage.SEMANTIC,
-                NodeUtils.getLine(newClassExpr),
-                NodeUtils.getColumn(newClassExpr),
-                message,
-                null)
-        );
-
-        return null;
-    }
-
 }

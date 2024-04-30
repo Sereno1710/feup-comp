@@ -22,7 +22,9 @@ public class ExprTypes extends AnalysisVisitor {
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.BINARY_EXPR, this::visitBinaryExpr);
+        addVisit(Kind.NEW_CLASS_EXPR, this::visitNewClassExpr);
         addVisit(Kind.NOT_EXPR, this::visitNotExpr);
+        addVisit(Kind.LENGTH_EXPR, this::visitLengthExpr);
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
@@ -153,6 +155,27 @@ public class ExprTypes extends AnalysisVisitor {
         return null;
     }
 
+    private Void visitNewClassExpr(JmmNode newClassExpr, SymbolTable table) {
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
+        String varName = newClassExpr.getParent().get("name");
+
+        // if classes match in initializations, return
+        if (TypeUtils.getTypeFromString(varName, newClassExpr, table)
+                .equals(TypeUtils.getTypeFromTypeString(newClassExpr.get("name"))))
+            return null;
+
+        var message = String.format("Variable '%s' has an invalid initialization.", varName);
+        addReport(Report.newError(
+                Stage.SEMANTIC,
+                NodeUtils.getLine(newClassExpr),
+                NodeUtils.getColumn(newClassExpr),
+                message,
+                null)
+        );
+
+        return null;
+    }
+
     private Void visitNotExpr(JmmNode notExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
@@ -170,6 +193,27 @@ public class ExprTypes extends AnalysisVisitor {
                 message,
                 null)
         );
+
+        return null;
+    }
+
+    private Void visitLengthExpr(JmmNode lengthExpr, SymbolTable table) {
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
+
+        // if length is used on something that is not an array, add an error
+        if (!TypeUtils.getExprType(lengthExpr.getChild(0), table).isArray()) {
+            // Create error report
+            var message = "Invalid operation: 'length' can only be used on arrays.";
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(lengthExpr),
+                    NodeUtils.getColumn(lengthExpr),
+                    message,
+                    null)
+            );
+
+            return null;
+        }
 
         return null;
     }
