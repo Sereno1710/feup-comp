@@ -19,9 +19,7 @@ public class JmmSymbolTableBuilder {
 
         List<String> imports = new ArrayList<>();
         List<JmmNode> importDecls = root.getChildren(IMPORT_DECL);
-        importDecls.forEach(importDecl -> {
-            imports.add(String.join(".", importDecl.getObjectAsList("value", String.class)));
-        });
+        importDecls.forEach(importDecl -> imports.add(String.join(".", importDecl.getObjectAsList("value", String.class))));
 
         JmmNode classDecl = root.getChild(root.getNumChildren() - 1);
 

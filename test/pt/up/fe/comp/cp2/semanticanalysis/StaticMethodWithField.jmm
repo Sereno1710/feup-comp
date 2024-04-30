@@ -1,11 +1,8 @@
 class StaticMethodWithField {
     int a;
 
-    public static int plusA(int num) {
-        return num + a;
-    }
-
     public static void main(String[] args) {
-
+        int b;
+        b = a + 2;
     }
 }

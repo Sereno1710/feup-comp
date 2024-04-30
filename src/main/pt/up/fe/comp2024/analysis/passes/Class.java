@@ -20,6 +20,7 @@ import java.util.Map;
 public class Class extends AnalysisVisitor {
 
     private String currentMethod;
+    private JmmNode currentMethodNode;
     private List<String> imports = new ArrayList<>();
 
     @Override
@@ -81,6 +82,7 @@ public class Class extends AnalysisVisitor {
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
         currentMethod = method.get("name");
+        currentMethodNode = method;
 
         // check duplicate fields
         List<Symbol> fields = table.getFields();
@@ -221,13 +223,39 @@ public class Class extends AnalysisVisitor {
     private Void visitClassChainExpr(JmmNode classChainExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        // Check if there is an import with the same name as class used
-        List<String> classAndFuncNames = classChainExpr.getObjectAsList("className", String.class);
-        List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
-        String className = classNames.get(classNames.size() - 1);
+        // if method is static, can't use 'this'
+        if (Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
+            // Check if there is an import with the same name as class used
+            List<String> classAndFuncNames = classChainExpr.getObjectAsList("className", String.class);
+            List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
+            String name = classNames.get(classNames.size() - 1);
 
-        // if class is 'this'
-        if (className.equals("this")) return null;
+            // if name is 'this'
+            if (name.equals("this")) {
+                // Create error report
+                var message = String.format("Can't use 'this' in static method: '%s'", currentMethod);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(classChainExpr),
+                        NodeUtils.getColumn(classChainExpr),
+                        message,
+                        null)
+                );
+
+                return null;
+            }
+        }
+
+        Type type = TypeUtils.getClassFromClassChain(classChainExpr, table);
+        String className;
+        if (type != null) {
+            className = type.getName();
+        } else {
+            className = "";
+        }
+
+        // Class is class in file, return
+        if (className.equals(table.getClassName())) return null;
 
         // Class is imported, return
         if (imports.stream()
@@ -235,21 +263,16 @@ public class Class extends AnalysisVisitor {
             return null;
         }
 
-        Type type = TypeUtils.getClassFromClassChain(classChainExpr, table);
-        // if var is not initiated
-        if (type == null) {
-            // Create error report
-            var message = String.format("Class '%s' was not imported or initialized.", className);
-            addReport(Report.newError(
-                    Stage.SEMANTIC,
-                    NodeUtils.getLine(classChainExpr),
-                    NodeUtils.getColumn(classChainExpr),
-                    message,
-                    null)
-            );
+        // Create error report
+        var message = String.format("Class '%s' was not imported or initialized.", className);
+        addReport(Report.newError(
+                Stage.SEMANTIC,
+                NodeUtils.getLine(classChainExpr),
+                NodeUtils.getColumn(classChainExpr),
+                message,
+                null)
+        );
 
-            return null;
-        }
         return null;
     }
 
