@@ -82,9 +82,9 @@ type
     : name=INT array=ARRAY
     | name=INT vargs=VARGS
     | name=INT
-    | name=STRING (array=ARRAY | vargs=VARGS)?
-    | name=BOOLEAN (array=ARRAY | vargs=VARGS)?
-    | name=ID (array=ARRAY | vargs=VARGS)?
+    | name=STRING (array=ARRAY)?
+    | name=BOOLEAN (array=ARRAY)?
+    | name=ID (array=ARRAY)?
     ;
 
 methodDecl locals[boolean isPublic=false, boolean isStatic=false]
