@@ -22,6 +22,7 @@ public class ExprTypes extends AnalysisVisitor {
     public void buildVisitor() {
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.BINARY_EXPR, this::visitBinaryExpr);
+        addVisit(Kind.NEW_CLASS_EXPR, this::visitNewClassExpr);
         addVisit(Kind.NOT_EXPR, this::visitNotExpr);
     }
 
@@ -146,6 +147,27 @@ public class ExprTypes extends AnalysisVisitor {
                 Stage.SEMANTIC,
                 NodeUtils.getLine(binaryExpr),
                 NodeUtils.getColumn(binaryExpr),
+                message,
+                null)
+        );
+
+        return null;
+    }
+
+    private Void visitNewClassExpr(JmmNode newClassExpr, SymbolTable table) {
+        SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
+        String varName = newClassExpr.getParent().get("name");
+
+        // if classes match in initializations, return
+        if (TypeUtils.getTypeFromString(varName, newClassExpr, table)
+                .equals(TypeUtils.getTypeFromTypeString(newClassExpr.get("name"))))
+            return null;
+
+        var message = String.format("Variable '%s' has an invalid initialization.", varName);
+        addReport(Report.newError(
+                Stage.SEMANTIC,
+                NodeUtils.getLine(newClassExpr),
+                NodeUtils.getColumn(newClassExpr),
                 message,
                 null)
         );

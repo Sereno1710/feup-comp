@@ -21,7 +21,7 @@ public class Class extends AnalysisVisitor {
 
     private String currentMethod;
     private JmmNode currentMethodNode;
-    private List<String> imports = new ArrayList<>();
+    private List<String> lastImports = new ArrayList<>();
 
     @Override
     public void buildVisitor() {
@@ -52,7 +52,7 @@ public class Class extends AnalysisVisitor {
         }
 
         Map<String, String> importMap = new HashMap<>();
-        for (String imp : imports) {
+        for (String imp : lastImports) {
             if (importMap.containsKey(imp)) {
                 // Create error report
                 var message = String.format("Class '%s' is imported more than once.", imp);
@@ -75,7 +75,7 @@ public class Class extends AnalysisVisitor {
     private Void visitImportDecl(JmmNode importDecl, SymbolTable table) {
         List<String> values = importDecl.getObjectAsList("value", String.class);
         if (!values.isEmpty()) {
-            imports.add(values.get(values.size() - 1));
+            lastImports.add(values.get(values.size() - 1));
         }
         return null;
     }
@@ -170,20 +170,22 @@ public class Class extends AnalysisVisitor {
             localsMap.put(sym.getName(), "a");
         }
 
-        // check if parameter has the same name as a field
-        for (Symbol param : parameters) {
-            if (fieldMap.containsKey(param.getName())) {
-                // Create error report
-                var message = String.format("Field '%s' was already defined.", param.getName());
-                addReport(Report.newError(
-                        Stage.SEMANTIC,
-                        NodeUtils.getLine(method),
-                        NodeUtils.getColumn(method),
-                        message,
-                        null)
-                );
+        // check if parameter has the same name as a field, if function is not static
+        if (!Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
+            for (Symbol param : parameters) {
+                if (fieldMap.containsKey(param.getName())) {
+                    // Create error report
+                    var message = String.format("Field '%s' was already defined.", param.getName());
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(method),
+                            NodeUtils.getColumn(method),
+                            message,
+                            null)
+                    );
 
-                return null;
+                    return null;
+                }
             }
         }
 
@@ -202,7 +204,8 @@ public class Class extends AnalysisVisitor {
 
                 return null;
             }
-            if (fieldMap.containsKey(local.getName())) {
+            // if method is not static
+            if (!Boolean.parseBoolean(currentMethodNode.get("isStatic")) && fieldMap.containsKey(local.getName())) {
                 // Create error report
                 var message = String.format("Field '%s' was already defined.", local.getName());
                 addReport(Report.newError(
@@ -258,7 +261,7 @@ public class Class extends AnalysisVisitor {
         if (className.equals(table.getClassName())) return null;
 
         // Class is imported, return
-        if (imports.stream()
+        if (lastImports.stream()
                 .anyMatch(importDecl -> importDecl.equals(className))) {
             return null;
         }
