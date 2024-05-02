@@ -4,6 +4,7 @@ import org.specs.comp.ollir.*;
 import org.specs.comp.ollir.tree.TreeNode;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp2024.analysis.passes.ReturnType;
 import pt.up.fe.specs.util.classmap.FunctionClassMap;
 import pt.up.fe.specs.util.exceptions.NotImplementedException;
 import pt.up.fe.specs.util.utilities.StringLines;
@@ -85,7 +86,7 @@ public class JasminGenerator {
         } else {
             code.append(classUnit.getSuperClass().replace("\\.","/")).append(NL);
         }
-
+        code.append(NL);
         var fieldsList = classUnit.getFields();
         for(var field: fieldsList){
             var final_f="";
@@ -159,7 +160,7 @@ public class JasminGenerator {
         var final_m="";
 
         code.append("\n.").append(method.isFinalMethod() ? "final method" : "method ").append(modifier).append(static_m).append(final_m).append(methodName).append("(").append(params).append(")").append(transformType(methodType)).append(NL);
-
+        code.append(NL);
         // Add limits
         code.append(TAB).append(".limit stack 99").append(NL);
         code.append(TAB).append(".limit locals 99").append(NL);
@@ -169,7 +170,7 @@ public class JasminGenerator {
                     .collect(Collectors.joining(NL + TAB, TAB, NL));
 
             code.append(instCode);
-            if(inst.getInstType() == InstructionType.CALL && !(((CallInstruction) inst).getReturnType().getTypeOfElement() == ElementType.VOID))
+            if(inst.getInstType() == InstructionType.CALL && !(((CallInstruction) inst).getReturnType().toString().equals("VOID")))
                 code.append(TAB).append("pop").append(NL);
         }
 
@@ -184,17 +185,19 @@ public class JasminGenerator {
     private String transformType(Type methodType) {
         var code= new StringBuilder();
         if (methodType.getTypeOfElement() == ElementType.OBJECTREF){
-            code.append("L").append(getImportedClassName(((ClassType)methodType).getName())).append(";");
+            code.append("L").append(getImportedClassName(((ClassType)methodType).getName()).replace(".","/")).append(";");
             return code.toString();
         } else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
             return "[" + transformArray(((ArrayType) methodType).getElementType()) + ";";
+        } else if (methodType.getTypeOfElement() == ElementType.STRING){
+            return "Ljava/lang/String;";
         }
         return transformString(methodType.toString());
     }
     private String transformArray(Type methodType ) {
         var code = new StringBuilder();
         if (methodType.getTypeOfElement() == ElementType.OBJECTREF) {
-            code.append(getImportedClassName(methodType.getTypeOfElement().toString())).append(";");
+            code.append(getImportedClassName(methodType.getTypeOfElement().toString()));
             return code.toString();
         }
         else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
@@ -212,7 +215,6 @@ public class JasminGenerator {
         switch (string){
             case "INT32": return "I";
             case "BOOLEAN": return "Z";
-            case "STRING": return "Ljava/lang/String;";
             case "VOID": return "V";
             default: return null;
         }
@@ -355,7 +357,6 @@ public class JasminGenerator {
                     code.append(generators.apply(elem));
                 methodName = getImportedClassName(((Operand) callInstruction.getCaller()).getName());
                 code.append("new ").append(methodName).append(NL);
-                code.append("dup").append(NL);
             }
             case "invokespecial" -> {
                 code.append(generators.apply(first));
@@ -364,13 +365,11 @@ public class JasminGenerator {
                 else {
                     methodName = getImportedClassName(((ClassType) a).getName());
                 }
-                var param="";
+                StringBuilder param= new StringBuilder();
                 for (var arg : callInstruction.getArguments()) {
-                    param+=transformType(arg.getType());
+                    param.append(transformType(arg.getType()));
                 }
-                code.append(generateOperand((Operand) callInstruction.getOperands().get(0)));
                 code.append("invokespecial ").append(methodName).append("/<init>").append("(").append(param).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
-                code.append("pop").append(NL);
             }
             case "invokevirtual" -> {
                 code.append(generators.apply(first));
@@ -399,7 +398,7 @@ public class JasminGenerator {
                 }
 
                 code.append("invokestatic ");
-                code.append(getImportedClassName(generators.apply(callInstruction.getCaller())));
+                code.append(getImportedClassName(((Operand) callInstruction.getCaller()).getName()));
                 code.append("/").append(second.getLiteral().replace("\"", ""))
                         .append("(")
                         .append(parameters)
