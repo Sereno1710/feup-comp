@@ -1,0 +1,17 @@
+class Class {
+
+    public static void main(String[] args) {
+        Class b;
+        b = this;
+        int a;
+        a = b.foo();
+    }
+
+    public int foo() {
+        int a;
+        boolean b;
+        b = false;
+        a = 2
+        return a;
+    }
+}

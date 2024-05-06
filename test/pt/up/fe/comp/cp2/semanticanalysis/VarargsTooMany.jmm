@@ -1,14 +1,14 @@
-class VarargsWrong {
+class VarargsTooMany {
 
     public int foo() {
         int a;
         boolean b;
         b = false;
-        a = this.varargs(10, 20, 30, b);
+        a = this.varargs(10, 20, 30);
         return a;
     }
 
-    public int varargs(int... a, int c, boolean b) {
+    public int varargs(int... a, int... c) {
         return a[0];
     }
 }

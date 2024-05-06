@@ -1,0 +1,10 @@
+class Shadow {
+    int a;
+    boolean b;
+
+    public int bar(int a, boolean c) {
+        boolean b;
+        b = c;
+        return a;
+    }
+}
