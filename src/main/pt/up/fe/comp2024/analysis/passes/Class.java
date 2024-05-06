@@ -21,11 +21,9 @@ public class Class extends AnalysisVisitor {
 
     private String currentMethod;
     private JmmNode currentMethodNode;
-    private final List<String> lastImports = new ArrayList<>();
 
     @Override
     public void buildVisitor() {
-        addVisit(Kind.IMPORT_DECL, this::visitImportDecl);
         addVisit(Kind.CLASS_DECL, this::visitClassDecl);
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.CLASS_CHAIN_EXPR, this::visitClassChainExpr);
@@ -71,7 +69,7 @@ public class Class extends AnalysisVisitor {
         }
 
         Map<String, String> importMap = new HashMap<>();
-        for (String imp : lastImports) {
+        for (String imp : table.getImports()) {
             if (importMap.containsKey(imp)) {
                 // Create error report
                 var message = String.format("Class '%s' is imported more than once.", imp);
@@ -88,14 +86,6 @@ public class Class extends AnalysisVisitor {
             importMap.put(imp, "a");
         }
 
-        return null;
-    }
-
-    private Void visitImportDecl(JmmNode importDecl, SymbolTable table) {
-        List<String> values = importDecl.getObjectAsList("value", String.class);
-        if (!values.isEmpty()) {
-            lastImports.add(values.get(values.size() - 1));
-        }
         return null;
     }
 
@@ -245,22 +235,20 @@ public class Class extends AnalysisVisitor {
     private Void visitClassChainExpr(JmmNode classChainExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        List<String> classAndFuncNames = classChainExpr.getObjectAsList("className", String.class);
-        List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
-        String classNameLiteral = classNames.get(classNames.size() - 1);
-
         Type type = TypeUtils.getClassFromClassChain(classChainExpr, table);
         String className;
         if (type != null) {
-            className = type.getName();
-        } else {
-            className = classNameLiteral;
+            if (type.hasAttribute("this")) className = "this";
+            else className = type.getName();
+        }
+        else {
+            className = "";
         }
 
         // if method is static, can't use 'this'
         if (Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
             // if name is 'this'
-            if (classNameLiteral.equals("this")) {
+            if (className.equals("this")) {
                 // Create error report
                 var message = String.format("Can't use 'this' in static method: '%s'", currentMethod);
                 addReport(Report.newError(
@@ -276,23 +264,22 @@ public class Class extends AnalysisVisitor {
         }
 
         // Class is class in file, return
-        if (className.equals(table.getClassName())) return null;
+        if (className.equals(table.getClassName()) || className.equals("this")) return null;
 
         // Class is imported, return
-        if (lastImports.stream()
-                .anyMatch(importDecl -> importDecl.equals(className))) {
-            return null;
-        }
+        if (type != null && type.hasAttribute("imported")) return null;
 
-        // Create error report
-        var message = String.format("Class '%s' was not imported or initialized.", className);
-        addReport(Report.newError(
-                Stage.SEMANTIC,
-                NodeUtils.getLine(classChainExpr),
-                NodeUtils.getColumn(classChainExpr),
-                message,
-                null)
-        );
+        if (type == null) {
+            // Create error report
+            var message = String.format("Class '%s' was not imported or initialized.", className);
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(classChainExpr),
+                    NodeUtils.getColumn(classChainExpr),
+                    message,
+                    null)
+            );
+        }
 
         return null;
     }

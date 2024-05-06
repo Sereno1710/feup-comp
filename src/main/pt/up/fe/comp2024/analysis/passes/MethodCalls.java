@@ -20,21 +20,11 @@ import java.util.Objects;
 public class MethodCalls extends AnalysisVisitor {
 
     private String currentMethod;
-    private List<String> lastImports = new ArrayList<>();
 
     @Override
     public void buildVisitor() {
-        addVisit(Kind.IMPORT_DECL, this::visitImportDecl);
         addVisit(Kind.METHOD_DECL, this::visitMethodDecl);
         addVisit(Kind.FUNC_EXPR, this::visitFuncExpr);
-    }
-
-    private Void visitImportDecl(JmmNode importDecl, SymbolTable table) {
-        List<String> values = importDecl.getObjectAsList("value", String.class);
-        if (!values.isEmpty()) {
-            lastImports.add(values.get(values.size() - 1));
-        }
-        return null;
     }
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
@@ -56,14 +46,16 @@ public class MethodCalls extends AnalysisVisitor {
         // if there's an extended class, assume method exists
         String extendedClass = table.getSuper();
         // if extended class is imported
-        if (lastImports.contains(extendedClass)) return true;
+        if (table.getImports().contains(extendedClass)) return true;
 
         // if class is imported
-        Type type = TypeUtils.getClassFromClassChain(funcExpr.getChild(0), table);
+        Type type = TypeUtils.getClassFromClassChain(funcExpr.getDescendants(Kind.CLASS_CHAIN_EXPR).get(0), table);
         if (type != null) {
-            if (lastImports.contains(type.getName())) return true;
+            if (type.hasAttribute("imported")) return true;
+            if (table.getImports().stream()
+                    .anyMatch(importDecl -> importDecl.equals(type.getName())))
+                return true;
         }
-        if (lastImports.contains(classNameList.get(0))) return true;
 
         // Create error report
         var message = String.format("Method '%s' is undeclared", methodName);
