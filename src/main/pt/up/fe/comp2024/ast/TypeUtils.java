@@ -47,6 +47,7 @@ public class TypeUtils {
             case ACC_EXPR -> getArrayAccessExprType(expr, table);
             case NEW_ARRAY -> getNewArrayType(expr);
             case ARRAY_EXPR -> getArrayExprType(expr, table);
+            case OBJECT_LITERAL -> new Type(table.getClassName(), false);
             case INTEGER_LITERAL, LENGTH_EXPR -> new Type(INT_TYPE_NAME, false);
             case BOOLEAN_LITERAL -> new Type(BOOLEAN_TYPE_NAME, false);
             default -> throw new UnsupportedOperationException("Can't compute type for expression kind '" + kind + "'");
