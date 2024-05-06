@@ -299,4 +299,52 @@ public class SemanticAnalysisTest {
         System.out.println(result.getReports());
         TestUtils.noErrors(result);
     }
+
+    @Test
+    public void duplicatedFieldInvalid() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/DuplicatedField.jmm"));
+        System.out.println(result.getReports());
+        TestUtils.mustFail(result);
+    }
+
+    @Test
+    public void duplicatedImportInvalid() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/DuplicatedImport.jmm"));
+        System.out.println(result.getReports());
+        TestUtils.mustFail(result);
+    }
+
+    @Test
+    public void fieldInStaticInvalid() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/FieldInStatic.jmm"));
+        System.out.println(result.getReports());
+        TestUtils.mustFail(result);
+    }
+
+    @Test
+    public void shadowFieldParamAndLocalOk() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/ShadowFieldParamAndLocal.jmm"));
+        System.out.println(result.getReports());
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void varEqualsThisOk() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/VarEqualsThis.jmm"));
+        System.out.println(result.getReports());
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void variableUndefinedArrayInvalid() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/VariableUndefinedArray.jmm"));
+        System.out.println(result.getReports());
+        TestUtils.mustFail(result);
+    }
 }

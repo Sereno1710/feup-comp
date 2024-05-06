@@ -1,0 +1,9 @@
+import A;
+import io.A;
+
+class B {
+    int b;
+
+    public static void main(String[] args) {
+    }
+}

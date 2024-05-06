@@ -1,0 +1,8 @@
+class FieldInStatic {
+    int a;
+
+    public static void main(String[] b) {
+        int b;
+        b = a + 1;
+    }
+}

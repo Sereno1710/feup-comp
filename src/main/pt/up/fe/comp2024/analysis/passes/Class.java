@@ -68,9 +68,10 @@ public class Class extends AnalysisVisitor {
             methodMap.put(method.get("name"), "a");
         }
 
+        // if class is imported more than once
         Map<String, String> importMap = new HashMap<>();
         for (String imp : table.getImports()) {
-            if (importMap.containsKey(imp)) {
+            if (importMap.containsKey(imp) || importMap.containsKey(imp.substring(imp.lastIndexOf(".") + 1))) {
                 // Create error report
                 var message = String.format("Class '%s' is imported more than once.", imp);
                 addReport(Report.newError(
@@ -179,44 +180,11 @@ public class Class extends AnalysisVisitor {
             localsMap.put(sym.getName(), "a");
         }
 
-        // check if parameter has the same name as a field, if function is not static
-        if (!Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
-            for (Symbol param : parameters) {
-                if (fieldMap.containsKey(param.getName())) {
-                    // Create error report
-                    var message = String.format("Field '%s' was already defined.", param.getName());
-                    addReport(Report.newError(
-                            Stage.SEMANTIC,
-                            NodeUtils.getLine(method),
-                            NodeUtils.getColumn(method),
-                            message,
-                            null)
-                    );
-
-                    return null;
-                }
-            }
-        }
-
-        // check if local variable has the same name as a parameter or field
+        // check if local variable has the same name as a parameter
         for (Symbol local : locals) {
             if (paramMap.containsKey(local.getName())) {
                 // Create error report
                 var message = String.format("Parameter '%s' was already defined.", local.getName());
-                addReport(Report.newError(
-                        Stage.SEMANTIC,
-                        NodeUtils.getLine(method),
-                        NodeUtils.getColumn(method),
-                        message,
-                        null)
-                );
-
-                return null;
-            }
-            // if method is not static
-            if (!Boolean.parseBoolean(currentMethodNode.get("isStatic")) && fieldMap.containsKey(local.getName())) {
-                // Create error report
-                var message = String.format("Field '%s' was already defined.", local.getName());
                 addReport(Report.newError(
                         Stage.SEMANTIC,
                         NodeUtils.getLine(method),

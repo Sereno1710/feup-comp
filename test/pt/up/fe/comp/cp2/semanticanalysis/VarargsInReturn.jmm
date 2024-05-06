@@ -1,0 +1,14 @@
+class VarargsInReturn {
+
+    public int foo() {
+        int a;
+        boolean b;
+        b = false;
+        a = this.varargs(10, 20, 30);
+        return a;
+    }
+
+    public int... varargs(int... a) {
+        return a;
+    }
+}

@@ -73,7 +73,7 @@ classDecl locals[boolean isPublic=false]
 
 varDecl
     : type name=ID SEMI #VariableDecl
-    | type name='main' SEMI #VariableDecl
+    | type name=('main' | 'length') SEMI #VariableDecl
     ;
 
 
@@ -118,8 +118,8 @@ stmt
     | IF LPAREN expr RPAREN stmt ELSE stmt #IfStmt
     | WHILE LPAREN expr RPAREN stmt #WhileStmt
     | FOR LPAREN stmt expr SEMI expr RPAREN stmt #ForStmt
-    | name=(ID | 'main') EQUALS expr SEMI #AssignStmt //
-    | name=(ID | 'main') LRET expr RRET EQUALS expr SEMI #AssignStmt
+    | name=(ID | 'main' | 'length') EQUALS expr SEMI #AssignStmt //
+    | name=(ID | 'main' | 'length') LRET expr RRET EQUALS expr SEMI #AssignStmt
     ;
 
 
@@ -142,7 +142,7 @@ expr
     | value=INTEGER #IntegerLiteral //
     | value='true' #BooleanLiteral
     | value='false' #BooleanLiteral
-    | name=(ID | 'main') #VarRefExpr //
+    | name=(ID | 'main' | 'length') #VarRefExpr //
     | value='this' #ObjectLiteral
     ;
 
