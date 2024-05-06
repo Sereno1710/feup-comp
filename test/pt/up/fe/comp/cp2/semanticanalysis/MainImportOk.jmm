@@ -4,8 +4,8 @@ class a {
 
     public static void main(String[] args) {
         int b;
-        b = main.foo();
         String[] a;
+        b = main.foo();
         main.main();
         main.b(a);
     }

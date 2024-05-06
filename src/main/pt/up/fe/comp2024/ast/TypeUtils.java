@@ -4,9 +4,7 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
-import pt.up.fe.comp2024.JavammParser;
 
-import javax.lang.model.element.TypeElement;
 import java.util.List;
 import java.util.Objects;
 
@@ -103,9 +101,28 @@ public class TypeUtils {
     public static Type getClassFromClassChain(JmmNode expr, SymbolTable table) {
         List<String> classAndFuncNames = expr.getObjectAsList("className", String.class);
         List<String> classNames = classAndFuncNames.subList(0, classAndFuncNames.size() - 1);
-        String className = classNames.get(classNames.size() - 1);
+        String className = String.join(".", classNames);
 
-        if (className.equals("this")) return new Type(table.getClassName(), false);
+        if (className.contains(".")) {
+            Type type = new Type(className, false);
+            type.putObject("classChain", true);
+            return type;
+        }
+
+        if (className.equals("this")) {
+            Type type = new Type(table.getClassName(), false);
+            type.putObject("this", true);
+            return type;
+        }
+
+        if (className.equals(table.getClassName()))
+            return new Type(table.getClassName(), false);
+
+        if (table.getImports().stream().anyMatch(importDecl -> importDecl.equals(className))) {
+            Type type = new Type(className, false);
+            type.putObject("imported", true);
+            return type;
+        }
 
         JmmNode curr = expr;
         Type type;
@@ -135,7 +152,7 @@ public class TypeUtils {
     }
 
     private static Type getVarExprTypeFromFuncExpr(JmmNode expr, SymbolTable table) {
-        String methodName = "";
+        String methodName;
         String className = "";
         if (expr.hasAttribute("name")) methodName = expr.get("name");
         else {

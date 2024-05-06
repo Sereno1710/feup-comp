@@ -60,11 +60,11 @@ program
     ;
 
 importDecl
-    : IMPORT value+=ID(DOT value+=ID)* SEMI ;
+    : IMPORT value+=(ID | 'main')(DOT value+=(ID | 'main'))* SEMI ;
 
 
 classDecl locals[boolean isPublic=false]
-    : (PUBLIC {$isPublic=true;})? CLASS name=ID (EXTENDS sup=ID)?
+    : (PUBLIC {$isPublic=true;})? CLASS name=(ID | 'main') (EXTENDS sup=(ID | 'main'))?
         LCURLY
         varDecl*
         (methodDecl)*
@@ -84,7 +84,7 @@ type
     | name=INT
     | name=STRING (array=ARRAY)?
     | name=BOOLEAN (array=ARRAY)?
-    | name=ID (array=ARRAY)?
+    | name=(ID | 'main') (array=ARRAY)?
     ;
 
 methodDecl locals[boolean isPublic=false, boolean isStatic=false]
@@ -105,7 +105,7 @@ params
     ;
 
 param
-    : type name=ID
+    : type name=(ID | 'main')
     ;
 
 returnS
@@ -118,15 +118,14 @@ stmt
     | IF LPAREN expr RPAREN stmt ELSE stmt #IfStmt
     | WHILE LPAREN expr RPAREN stmt #WhileStmt
     | FOR LPAREN stmt expr SEMI expr RPAREN stmt #ForStmt
-    | name=ID EQUALS expr SEMI #AssignStmt //
-    | name=ID LRET expr RRET EQUALS expr SEMI #AssignStmt
+    | name=(ID | 'main') EQUALS expr SEMI #AssignStmt //
+    | name=(ID | 'main') LRET expr RRET EQUALS expr SEMI #AssignStmt
     ;
 
 
 expr
-    : className+=(ID | 'this') (DOT className+=ID)+ #ClassChainExpr
-    | expr (DOT name=ID)* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
-    | name=ID op=(INC | DEC) #IncDecExpr
+    : className+=(ID | 'this' | 'main') (DOT className+=(ID | 'main'))+ #ClassChainExpr
+    | expr (DOT name=(ID | 'main'))* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
     | NOT expr #NotExpr
     | expr op=(MUL  | DIV | REM) expr #BinaryExpr //
     | expr op=(ADD | SUB) expr #BinaryExpr //
@@ -137,13 +136,13 @@ expr
     | expr LRET expr RRET #AccExpr
     | expr (DOT 'length') #LengthExpr
     | NEW type LRET expr RRET #NewArray
-    | NEW name=ID LPAREN expr* RPAREN #NewClassExpr
+    | NEW name=(ID | 'main') LPAREN expr* RPAREN #NewClassExpr
     | LPAREN expr RPAREN #ParenExpr
     | LRET expr (CMA expr)* RRET #ArrayExpr
     | value=INTEGER #IntegerLiteral //
     | value='true' #BooleanLiteral
     | value='false' #BooleanLiteral
-    | name=ID #VarRefExpr //
+    | name=(ID | 'main') #VarRefExpr //
     | value='this' #ObjectLiteral
     ;
 
