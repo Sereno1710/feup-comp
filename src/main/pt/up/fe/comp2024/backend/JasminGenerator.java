@@ -53,6 +53,8 @@ public class JasminGenerator {
         generators.put(PutFieldInstruction.class, this::generatePutField);
         generators.put(GetFieldInstruction.class, this::generateGetField);
         generators.put(CallInstruction.class, this::generateCallInstruction);
+        generators.put(ArrayOperand.class,this::generateArrayElement);
+        generators.put(Instruction.class,this::generateInstruction);
     }
 
     public List<Report> getReports() {
