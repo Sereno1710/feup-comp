@@ -191,7 +191,7 @@ public class JasminGenerator {
             code.append("L").append(getImportedClassName(((ClassType)methodType).getName()).replace(".","/")).append(";");
             return code.toString();
         } else if(methodType.getTypeOfElement() == ElementType.ARRAYREF){
-            return "[" + transformArray(((ArrayType) methodType).getElementType()) + ";";
+            return "[" + transformArray(((ArrayType) methodType).getElementType());
         } else if (methodType.getTypeOfElement() == ElementType.STRING){
             return "Ljava/lang/String;";
         }
@@ -209,7 +209,7 @@ public class JasminGenerator {
         switch (methodType.toString()){
             case "INT32": return "I";
             case "BOOLEAN": return "Z";
-            case "STRING": return "Ljava/lang/String";
+            case "STRING": return "Ljava/lang/String;";
             case "VOID": return "V";
             default: return null;
         }
