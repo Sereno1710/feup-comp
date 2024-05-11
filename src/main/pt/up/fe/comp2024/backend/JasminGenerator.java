@@ -77,7 +77,7 @@ public class JasminGenerator {
         var className = classUnit.getClassName();
         var modifier = classUnit.getClassAccessModifier() != AccessModifier.DEFAULT ?
                 classUnit.getClassAccessModifier().name().toLowerCase() + " " :
-                "";
+                "public ";
         code.append(".class ").append(modifier).append(className).append(NL);
 
         code.append(".super ");
@@ -240,6 +240,7 @@ public class JasminGenerator {
 
         // get register
         var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
+
         // TODO: Hardcoded for int type, needs to be expanded
         if(operand.getType().getTypeOfElement().toString().equals("INT32") | operand.getType().getTypeOfElement().toString().equals("BOOLEAN")){
             code.append("istore ").append(reg).append(NL);
@@ -381,8 +382,13 @@ public class JasminGenerator {
 
         switch (type) {
             case "NEW" -> {
-                for (Element elem : callInstruction.getArguments())
-                    code.append(generators.apply(elem));
+                if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.ARRAYREF)){
+                    for(Element elem: callInstruction.getArguments()){
+                        code.append(loadVar(elem));
+                    }
+                    code.append(TAB).append("newarray int").append(NL);
+                    break;
+                }
                 methodName = getImportedClassName(((Operand) callInstruction.getCaller()).getName());
                 code.append("new ").append(methodName).append(NL);
             }
@@ -433,6 +439,9 @@ public class JasminGenerator {
                         .append(")")
                         .append(transformType(callInstruction.getReturnType()))
                         .append(NL);
+            }
+            case "arraylength" -> {
+                code.append(loadVar(callInstruction.getCaller())).append("arraylength").append(NL);
             }
             default ->{
                 throw new NotImplementedException("Not supported: " + callInstruction.getInvocationType());
