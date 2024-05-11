@@ -32,7 +32,8 @@ public class JasminGenerator {
     Method currentMethod;
     ClassUnit classUnit;
     private final FunctionClassMap<TreeNode, String> generators;
-
+    private final int limits_stack = 0;
+    private final int limits_locals = 0;
     public JasminGenerator(OllirResult ollirResult) {
         this.ollirResult = ollirResult;
         classUnit = this.ollirResult.getOllirClass();
@@ -229,10 +230,12 @@ public class JasminGenerator {
         // store value in the stack in destination
         var lhs = assign.getDest();
 
-        if (!(lhs instanceof Operand)) {
-            throw new NotImplementedException(lhs.getClass());
+        if (lhs instanceof ArrayOperand) {
+            code.append("aload ").append(currentMethod.getVarTable().get(((ArrayOperand) lhs).getName()).getVirtualReg()).append(NL);
+            var temp = ((ArrayOperand) lhs).getIndexOperands().get(0);
+            code.append(loadVar(temp));
+            code.append(generateInstruction(assign.getRhs()));
         }
-
         var operand = (Operand) lhs;
 
         // get register
@@ -245,11 +248,36 @@ public class JasminGenerator {
 
         return code.toString();
     }
-
+    private String generateInstruction(Instruction inst){
+        var code = new StringBuilder();
+        switch (inst.getInstType()){
+            case ASSIGN -> code.append(generateAssign((AssignInstruction) inst));
+            case BINARYOPER -> code.append(generateBinaryOp((BinaryOpInstruction) inst));
+            case CALL -> code.append(generateCallInstruction((CallInstruction) inst));
+            case GETFIELD -> code.append(generateGetField((GetFieldInstruction) inst));
+            case PUTFIELD -> code.append(generatePutField((PutFieldInstruction) inst));
+            case RETURN -> code.append(generateReturn((ReturnInstruction) inst));
+        }
+        return code.toString();
+    }
+    private String loadVar(Element element){
+        var code = new StringBuilder();
+        if(element instanceof LiteralElement) code.append(generateLiteral((LiteralElement) element)).append(NL);
+        else if (element instanceof  ArrayOperand) code.append(generateArrayElement((ArrayOperand) element)).append(NL);
+        else if (element instanceof Operand) code.append(generateOperand((Operand) element)).append(NL);
+        return code.toString();
+    }
     private String generateSingleOp(SingleOpInstruction singleOp) {
         return generators.apply(singleOp.getSingleOperand());
     }
 
+    private String generateArrayElement(ArrayOperand array) {
+        var code = new StringBuilder();
+        var reg = currentMethod.getVarTable().get(array.getName()).getVirtualReg();
+        code.append(TAB).append("aload ").append(reg).append(NL);
+        code.append(TAB).append(loadVar(array.getIndexOperands().get(0))).append(NL).append(TAB).append("iaload");
+        return "";
+    }
     private String generateLiteral(LiteralElement literal) {
         var code=new StringBuilder();
         if(literal.getType().getTypeOfElement().toString().equals("INT32")|| literal.getType().getTypeOfElement().toString().equals("BOOLEAN")){
@@ -267,7 +295,7 @@ public class JasminGenerator {
 
     private String generateOperand(Operand operand) {
 
-        if(operand.getType().getTypeOfElement().toString().equals("THIS")) return "aload 0"+ NL;
+        if(operand.getType().getTypeOfElement().toString().equals("THIS")) return "aload_0"+ NL;
         else if(operand.getType().getTypeOfElement().toString().equals("INT32") | operand.getType().getTypeOfElement().toString().equals("BOOLEAN")) {
             var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
             return "iload " + reg +NL;}
