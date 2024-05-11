@@ -245,6 +245,10 @@ public class JasminGenerator {
 
         // TODO: Hardcoded for int type, needs to be expanded
         if(operand.getType().getTypeOfElement().toString().equals("INT32") | operand.getType().getTypeOfElement().toString().equals("BOOLEAN")){
+            if(currentMethod.getVarTable().get(operand.getName()).getVarType().getTypeOfElement().equals(ElementType.ARRAYREF)){
+                code.append("iastore").append(NL);
+                return code.toString();
+            }
             code.append("istore ").append(reg).append(NL);
         }
         else code.append("astore ").append(reg).append(NL);
@@ -322,6 +326,10 @@ public class JasminGenerator {
             case DIV -> "idiv";
             case ADD -> "iadd";
             case SUB -> "isub";
+            case ANDB ->  "iand";
+            case NOTB -> "ifeq";
+            case LTH -> "if_icmplt";
+            case GTE -> "if_imcpte";
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
         };
 
