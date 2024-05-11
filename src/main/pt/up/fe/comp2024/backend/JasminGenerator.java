@@ -386,8 +386,13 @@ public class JasminGenerator {
                     for(Element elem: callInstruction.getArguments()){
                         code.append(loadVar(elem));
                     }
-                    code.append(TAB).append("newarray int").append(NL);
+                    code.append("newarray int").append(NL);
                     break;
+                }
+                else {
+                    for(Element elem: callInstruction.getArguments()){
+                        code.append(loadVar(elem));
+                    }
                 }
                 methodName = getImportedClassName(((Operand) callInstruction.getCaller()).getName());
                 code.append("new ").append(methodName).append(NL);
