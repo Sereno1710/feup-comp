@@ -235,7 +235,7 @@ public class JasminGenerator {
         if (lhs instanceof ArrayOperand) {
             code.append("aload ").append(currentMethod.getVarTable().get(((ArrayOperand) lhs).getName()).getVirtualReg()).append(NL);
             var temp = ((ArrayOperand) lhs).getIndexOperands().get(0);
-            code.append(loadVar(temp));
+            code.append(generators.apply(temp));
             code.append(generateInstruction(assign.getRhs()));
         }
         var operand = (Operand) lhs;
@@ -267,13 +267,6 @@ public class JasminGenerator {
         }
         return code.toString();
     }
-    private String loadVar(Element element){
-        var code = new StringBuilder();
-        if(element instanceof LiteralElement) code.append(generateLiteral((LiteralElement) element)).append(NL);
-        else if (element instanceof  ArrayOperand) code.append(generateArrayElement((ArrayOperand) element)).append(NL);
-        else if (element instanceof Operand) code.append(generateOperand((Operand) element)).append(NL);
-        return code.toString();
-    }
     private String generateSingleOp(SingleOpInstruction singleOp) {
         return generators.apply(singleOp.getSingleOperand());
     }
@@ -282,7 +275,7 @@ public class JasminGenerator {
         var code = new StringBuilder();
         var reg = currentMethod.getVarTable().get(array.getName()).getVirtualReg();
         code.append(TAB).append("aload ").append(reg).append(NL);
-        code.append(TAB).append(loadVar(array.getIndexOperands().get(0))).append(NL).append(TAB).append("iaload");
+        code.append(TAB).append(generators.apply(array.getIndexOperands().get(0))).append(NL).append(TAB).append("iaload");
         return "";
     }
     private String generateLiteral(LiteralElement literal) {
@@ -394,14 +387,14 @@ public class JasminGenerator {
             case "NEW" -> {
                 if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.ARRAYREF)){
                     for(Element elem: callInstruction.getArguments()){
-                        code.append(loadVar(elem));
+                        code.append(generators.apply(elem));
                     }
                     code.append("newarray int").append(NL);
                     break;
                 }
                 else {
                     for(Element elem: callInstruction.getArguments()){
-                        code.append(loadVar(elem));
+                        code.append(generators.apply(elem));
                     }
                 }
                 methodName = getImportedClassName(((Operand) callInstruction.getCaller()).getName());
@@ -456,7 +449,7 @@ public class JasminGenerator {
                         .append(NL);
             }
             case "arraylength" -> {
-                code.append(loadVar(callInstruction.getCaller())).append("arraylength").append(NL);
+                code.append(generators.apply(callInstruction.getCaller())).append("arraylength").append(NL);
             }
             default ->{
                 throw new NotImplementedException("Not supported: " + callInstruction.getInvocationType());
