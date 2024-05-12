@@ -54,7 +54,6 @@ public class JasminGenerator {
         generators.put(GetFieldInstruction.class, this::generateGetField);
         generators.put(CallInstruction.class, this::generateCallInstruction);
         generators.put(ArrayOperand.class,this::generateArrayElement);
-        generators.put(Instruction.class,this::generateInstruction);
     }
 
     public List<Report> getReports() {
@@ -236,7 +235,7 @@ public class JasminGenerator {
             code.append("aload ").append(currentMethod.getVarTable().get(((ArrayOperand) lhs).getName()).getVirtualReg()).append(NL);
             var temp = ((ArrayOperand) lhs).getIndexOperands().get(0);
             code.append(generators.apply(temp));
-            code.append(generateInstruction(assign.getRhs()));
+            code.append(generators.apply(assign.getRhs()));
         }
         var operand = (Operand) lhs;
 
@@ -253,18 +252,6 @@ public class JasminGenerator {
         }
         else code.append("astore ").append(reg).append(NL);
 
-        return code.toString();
-    }
-    private String generateInstruction(Instruction inst){
-        var code = new StringBuilder();
-        switch (inst.getInstType()){
-            case ASSIGN -> code.append(generateAssign((AssignInstruction) inst));
-            case BINARYOPER -> code.append(generateBinaryOp((BinaryOpInstruction) inst));
-            case CALL -> code.append(generateCallInstruction((CallInstruction) inst));
-            case GETFIELD -> code.append(generateGetField((GetFieldInstruction) inst));
-            case PUTFIELD -> code.append(generatePutField((PutFieldInstruction) inst));
-            case RETURN -> code.append(generateReturn((ReturnInstruction) inst));
-        }
         return code.toString();
     }
     private String generateSingleOp(SingleOpInstruction singleOp) {
