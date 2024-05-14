@@ -261,9 +261,9 @@ public class JasminGenerator {
     private String generateArrayElement(ArrayOperand array) {
         var code = new StringBuilder();
         var reg = currentMethod.getVarTable().get(array.getName()).getVirtualReg();
-        code.append(TAB).append("aload ").append(reg).append(NL);
-        code.append(TAB).append(generators.apply(array.getIndexOperands().get(0))).append(NL).append(TAB).append("iaload");
-        return "";
+        code.append("aload ").append(reg).append(NL);
+        code.append(generators.apply(array.getIndexOperands().get(0))).append(NL).append("iaload");
+        return code.toString();
     }
     private String generateLiteral(LiteralElement literal) {
         var code=new StringBuilder();
