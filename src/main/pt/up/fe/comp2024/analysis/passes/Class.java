@@ -97,36 +97,37 @@ public class Class extends AnalysisVisitor {
         currentMethodNode = method;
 
         // check duplicate fields
+        List<JmmNode> fieldNodes =  method.getParent().getChildren(Kind.VAR_DECL);
         List<Symbol> fields = table.getFields();
         Map<String, String> fieldMap = new HashMap<>();
-        for (Symbol field : fields) {
-            if (field.getType().hasAttribute("vargs")) {
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).getType().hasAttribute("vargs")) {
                 // Create error report
-                var message = String.format("Field '%s' cannot be varargs.", field.getName());
+                var message = String.format("Field '%s' cannot be varargs.", fields.get(i).getName());
                 addReport(Report.newError(
                         Stage.SEMANTIC,
-                        NodeUtils.getLine(method.getParent()),
-                        NodeUtils.getColumn(method.getParent()),
+                        NodeUtils.getLine(fieldNodes.get(i)),
+                        NodeUtils.getColumn(fieldNodes.get(i)),
                         message,
                         null)
                 );
 
                 return null;
             }
-            if (fieldMap.containsKey(field.getName())) {
+            if (fieldMap.containsKey(fields.get(i).getName())) {
                 // Create error report
-                var message = String.format("Field '%s' was already defined.", field.getName());
+                var message = String.format("Field '%s' was already defined.", fields.get(i).getName());
                 addReport(Report.newError(
                         Stage.SEMANTIC,
-                        NodeUtils.getLine(method.getParent()),
-                        NodeUtils.getColumn(method.getParent()),
+                        NodeUtils.getLine(fieldNodes.get(i)),
+                        NodeUtils.getColumn(fieldNodes.get(i)),
                         message,
                         null)
                 );
 
                 return null;
             }
-            fieldMap.put(field.getName(), "a");
+            fieldMap.put(fields.get(i).getName(), "a");
         }
 
         // check duplicate parameters
