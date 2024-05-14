@@ -71,18 +71,20 @@ public class Class extends AnalysisVisitor {
         // if class is imported more than once
         Map<String, String> importMap = new HashMap<>();
         for (String imp : table.getImports()) {
-            if (importMap.containsKey(imp) || importMap.containsKey(imp.substring(imp.lastIndexOf(".") + 1))) {
-                // Create error report
-                var message = String.format("Class '%s' is imported more than once.", imp);
-                addReport(Report.newError(
-                        Stage.SEMANTIC,
-                        NodeUtils.getLine(classDecl.getParent()),
-                        NodeUtils.getColumn(classDecl.getParent()),
-                        message,
-                        null)
-                );
+            for (String key : importMap.keySet()) {
+                if (imp.contains(key) || key.contains(imp)) {
+                    // Create error report
+                    var message = String.format("Class '%s' is imported more than once.", imp);
+                    addReport(Report.newError(
+                            Stage.SEMANTIC,
+                            NodeUtils.getLine(classDecl.getParent()),
+                            NodeUtils.getColumn(classDecl.getParent()),
+                            message,
+                            null)
+                    );
 
-                return null;
+                    return null;
+                }
             }
             importMap.put(imp, "a");
         }

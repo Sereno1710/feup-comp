@@ -1,5 +1,5 @@
-import A;
 import io.A;
+import C.io.A;
 
 class B {
     int b;
