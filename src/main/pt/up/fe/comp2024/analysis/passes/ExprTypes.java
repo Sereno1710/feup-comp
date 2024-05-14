@@ -98,7 +98,8 @@ public class ExprTypes extends AnalysisVisitor {
                         }
                     }
                 }
-                else  name = expr.getJmmChild(0).getObjectAsList("className", String.class).get(0);
+                else if (expr.getKind().equals(Kind.FUNC_EXPR.toString()) || expr.getKind().equals(Kind.CLASS_CHAIN_EXPR.toString()))
+                    name = expr.getJmmChild(0).getObjectAsList("className", String.class).get(0);
             }
 
             type = TypeUtils.getExprType(expr, table);
