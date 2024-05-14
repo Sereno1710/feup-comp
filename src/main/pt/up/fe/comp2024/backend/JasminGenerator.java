@@ -262,7 +262,7 @@ public class JasminGenerator {
         var code = new StringBuilder();
         var reg = currentMethod.getVarTable().get(array.getName()).getVirtualReg();
         code.append("aload ").append(reg).append(NL);
-        code.append(generators.apply(array.getIndexOperands().get(0))).append(NL).append("iaload");
+        code.append(generators.apply(array.getIndexOperands().get(0))).append(NL).append("iaload").append(NL);
         return code.toString();
     }
     private String generateLiteral(LiteralElement literal) {
