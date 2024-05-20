@@ -29,7 +29,8 @@ public class ArrayAccess extends AnalysisVisitor {
     private Void visitAccExpr(JmmNode accExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        String name = accExpr.getChild(0).get("name");
+        String name = "";
+        if (accExpr.getChild(0).hasAttribute("name")) name = accExpr.getChild(0).get("name");
 
         Type arrayType = TypeUtils.getExprType(accExpr.getChild(0), table);
         Type accessVarType = TypeUtils.getExprType(accExpr.getChild(1), table);
