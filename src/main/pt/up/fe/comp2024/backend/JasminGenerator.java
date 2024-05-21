@@ -54,6 +54,14 @@ public class JasminGenerator {
         generators.put(GetFieldInstruction.class, this::generateGetField);
         generators.put(CallInstruction.class, this::generateCallInstruction);
         generators.put(ArrayOperand.class,this::generateArrayElement);
+        generators.put(OpCondInstruction.class, this::generateBranch);
+        generators.put(GotoInstruction.class,this::generateGoTo);
+    }
+
+    private String generateGoTo(GotoInstruction gotoInstruction) {
+        var code = new StringBuilder();
+        code.append("goto ").append(gotoInstruction.getLabel());
+        return code.toString();
     }
 
     public List<Report> getReports() {
@@ -285,7 +293,8 @@ public class JasminGenerator {
         if(operand.getType().getTypeOfElement().toString().equals("THIS")) return "aload_0"+ NL;
         else if(operand.getType().getTypeOfElement().toString().equals("INT32") | operand.getType().getTypeOfElement().toString().equals("BOOLEAN")) {
             var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
-            return "iload " + reg +NL;}
+            return "iload " + reg +NL;
+        }
         else if(operand.getType().getTypeOfElement().toString().equals("STRING") || operand.getType().getTypeOfElement().toString().equals("OBJECTREF") || operand.getType().getTypeOfElement().toString().equals("ARRAYREF")) {
             var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
             return "aload " + reg + NL;
@@ -299,7 +308,7 @@ public class JasminGenerator {
         // load values on the left and on the right
         code.append(generators.apply(binaryOp.getLeftOperand()));
         code.append(generators.apply(binaryOp.getRightOperand()));
-
+        var a = binaryOp.getOperation().getOpType();
         // apply operation
         var op = switch (binaryOp.getOperation().getOpType()) {
             case MUL -> "imul";
@@ -308,8 +317,7 @@ public class JasminGenerator {
             case SUB -> "isub";
             case ANDB ->  "iand";
             case NOTB -> "ifeq";
-            case LTH -> "if_icmplt";
-            case GTE -> "if_imcpte";
+            case LTH -> "iflt";
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
         };
 
@@ -320,11 +328,10 @@ public class JasminGenerator {
     private String generatePutField(PutFieldInstruction putField) {
         var code = new StringBuilder();
 
-        code.append(generators.apply(putField.getObject()));
+        code.append(generators.apply(putField.getOperands().get(0)));
+        code.append(generators.apply(putField.getOperands().get(2)));
 
-        code.append(generators.apply(putField.getValue()));
-
-        var className = this.ollirResult.getOllirClass().getClassName();
+        var className = getImportedClassName(((Operand) putField.getOperands().get(0)).getName());
         var fieldName = putField.getField().getName();
         var fieldType = transformType(putField.getField().getType());
         code.append("putfield ").append(className).append("/").append(fieldName).append(" ").append(fieldType).append(NL);
@@ -336,9 +343,9 @@ public class JasminGenerator {
         var code = new StringBuilder();
 
 
-        code.append(generators.apply(getField.getObject()));
+        code.append(generators.apply(getField.getOperands().get(0)));
 
-        var className = this.ollirResult.getOllirClass().getClassName();
+        var className = getImportedClassName(((Operand) getField.getOperands().get(0)).getName());
         var fieldName = getField.getField().getName();
         var fieldType = transformType(getField.getField().getType());
         code.append("getfield ").append(className).append("/").append(fieldName).append(" ").append(fieldType).append(NL);
@@ -444,6 +451,14 @@ public class JasminGenerator {
         }
         return code.toString();
     }
+
+    private String generateBranch(OpCondInstruction instruction) {
+        var code = new StringBuilder();
+        var op = instruction.getCondition();
+        code.append(generators.apply(op));
+        return code.toString();
+    }
+
     private String getImportedClassName(String className) {
 
         if (className.equals("this"))
@@ -457,4 +472,6 @@ public class JasminGenerator {
 
         return className;
     }
+
+
 }
