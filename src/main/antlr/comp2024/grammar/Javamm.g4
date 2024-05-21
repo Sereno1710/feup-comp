@@ -97,7 +97,7 @@ methodDecl locals[boolean isPublic=false, boolean isStatic=false]
         LPAREN params? RPAREN
         LCURLY
         varDecl* stmt*
-        returnS
+        returnS?
         RCURLY
     ;
 params

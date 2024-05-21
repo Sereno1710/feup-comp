@@ -14,6 +14,7 @@ import pt.up.fe.specs.util.SpecsCheck;
 public class Assignment extends AnalysisVisitor {
 
     private String currentMethod;
+    private JmmNode currentMethodNode;
 
     @Override
     protected void buildVisitor() {
@@ -23,6 +24,7 @@ public class Assignment extends AnalysisVisitor {
 
     private Void visitMethodDecl(JmmNode method, SymbolTable table) {
         currentMethod = method.get("name");
+        currentMethodNode = method;
         return null;
     }
 
@@ -30,6 +32,42 @@ public class Assignment extends AnalysisVisitor {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
         String varName = assignStmt.get("name");
+
+        boolean declared = false;
+        // Var is a local variable
+        if (table.getLocalVariables(currentMethod).stream()
+                .anyMatch(varDecl -> varDecl.getName().equals(varName))) {
+            declared = true;
+        }
+
+        // Var is a parameter
+        if (!declared && table.getParameters(currentMethod).stream()
+                .anyMatch(param -> param.getName().equals(varName))) {
+            declared = true;
+        }
+
+        // Var is a field and method is not static
+        if (!declared && table.getFields().stream()
+                .anyMatch(param -> param.getName().equals(varName)) &&
+                !Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
+            declared = true;
+        }
+
+        // if variable is not declared
+        if (!declared) {
+            // Create error report
+            var message = String.format("Variable '%s' does not exist.", varName);
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(assignStmt),
+                    NodeUtils.getColumn(assignStmt),
+                    message,
+                    null)
+            );
+
+            return null;
+        }
+
         Type left = TypeUtils.getTypeFromString(varName, assignStmt, table);
         Type right = TypeUtils.getExprType(assignStmt.getChild(0), table);
 
