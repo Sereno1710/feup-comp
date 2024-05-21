@@ -56,6 +56,7 @@ public class JasminGenerator {
         generators.put(ArrayOperand.class,this::generateArrayElement);
         generators.put(CondBranchInstruction.class, this::generateCondInstruction);
         generators.put(GotoInstruction.class,this::generateGoTo);
+        generators.put(UnaryOpInstruction.class,this::generateUnary);
     }
 
     private String generateCondInstruction(CondBranchInstruction instruction) {
@@ -97,6 +98,22 @@ public class JasminGenerator {
         return code.toString();
     }
 
+    private String generateUnary(UnaryOpInstruction unaryOpInstruction) {
+        var code = new StringBuilder();
+        var operand = unaryOpInstruction.getOperand();
+        var op = unaryOpInstruction.getOperation().getOpType();
+
+        if (op.equals(OperationType.NOTB)) {
+            code.append(generators.apply(operand));
+
+            code.append("iconst_1").append(NL);
+            code.append("ixor").append(NL);
+        } else {
+            throw new NotImplementedException("Unary operation not supported: " + op);
+        }
+
+        return code.toString();
+    }
 
     private String generateGoTo(GotoInstruction gotoInstruction) {
         var code = new StringBuilder();
