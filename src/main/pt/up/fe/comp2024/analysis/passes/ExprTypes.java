@@ -41,7 +41,23 @@ public class ExprTypes extends AnalysisVisitor {
             case "+", "*", "-", "/", "<", ">", "<=", ">=" -> intOrBoolean = new Type(TypeUtils.getIntTypeName(), false);
             case "&&", "||", "!" -> intOrBoolean = new Type(TypeUtils.getBooleanTypeName(), false);
         }
-        if (intOrBoolean != null && !TypeUtils.getExprType(binaryExpr.getChild(0), table).equals(intOrBoolean)) {
+
+        if (intOrBoolean == null) {
+            // Create error report
+            var message = String.format("Invalid operator: operator '%s' is not accepted.", operator);
+            addReport(Report.newError(
+                    Stage.SEMANTIC,
+                    NodeUtils.getLine(binaryExpr),
+                    NodeUtils.getColumn(binaryExpr),
+                    message,
+                    null)
+            );
+
+            return null;
+        }
+
+        if (!TypeUtils.getExprType(binaryExpr.getChild(0), table).equals(intOrBoolean) ||
+                !TypeUtils.getExprType(binaryExpr.getChild(1), table).equals(intOrBoolean)) {
             // Create error report
             var message = String.format("Invalid operation: operator '%s' requires '%s' types.", operator, intOrBoolean.getName());
             addReport(Report.newError(
@@ -54,104 +70,6 @@ public class ExprTypes extends AnalysisVisitor {
 
             return null;
         }
-
-        // Get members of expression
-        var expressions = binaryExpr.getChildren();
-
-        // boolean that tells us whether the operation is valid
-        boolean valid = true;
-        // last variable and its type
-        Pair<String, Type> lastVariable = new Pair<>("", null);
-        String variableIfTheresError = "";
-        for (var expr : expressions) {
-            String name = "";
-            Type type;
-            if(expr.getKind().equals("ParenExpr")) {
-                for(var child: expr.getChildren()){
-                    visitBinaryExpr(child,table);
-                }
-                continue;
-            }
-            if (expr.hasAttribute("name")) {
-                name = expr.get("name");
-            } else if (expr.hasAttribute("value")){
-                name = expr.get("value");
-            } else {
-                if (expr.getKind().equals("BinaryExpr")) {
-                    Type typeTemp = TypeUtils.getExprType(expr, table);
-                    for(var child: expr.getChildren()){
-                        if(child.getKind().equals("BinaryExpr")) {
-                            if (!TypeUtils.getExprType(child, table).equals(typeTemp)) {
-                                // Create error report
-                                var message = "Invalid operation: incompatible types in expression.";
-                                addReport(Report.newError(
-                                        Stage.SEMANTIC,
-                                        NodeUtils.getLine(binaryExpr),
-                                        NodeUtils.getColumn(binaryExpr),
-                                        message,
-                                        null)
-                                );
-
-                                return null;
-                            }
-                            visitBinaryExpr(child, table);
-                        }
-                    }
-                }
-                else if (expr.getKind().equals(Kind.FUNC_EXPR.toString()) || expr.getKind().equals(Kind.CLASS_CHAIN_EXPR.toString()))
-                    name = expr.getJmmChild(0).getObjectAsList("className", String.class).get(0);
-            }
-
-            type = TypeUtils.getExprType(expr, table);
-
-            if (type == null) {
-                // Create error report
-                var message = String.format("Invalid operation: '%s' and '%s' have different types.", lastVariable.a, variableIfTheresError);
-                addReport(Report.newError(
-                        Stage.SEMANTIC,
-                        NodeUtils.getLine(binaryExpr),
-                        NodeUtils.getColumn(binaryExpr),
-                        message,
-                        null)
-                );
-
-                return null;
-            }
-
-            // if expression is array, operation is invalid
-            if (Objects.requireNonNull(type).isArray()) {
-                // Create error report
-                var message = String.format("Invalid operation: variable '%s' is an array.", name);
-                addReport(Report.newError(
-                        Stage.SEMANTIC,
-                        NodeUtils.getLine(binaryExpr),
-                        NodeUtils.getColumn(binaryExpr),
-                        message,
-                        null)
-                );
-
-                return null;
-            }
-            // different types in the expressions, will create error report
-            if (!Objects.equals(lastVariable.a, "") && !Objects.equals(type, lastVariable.b)) {
-                valid = false;
-                variableIfTheresError = name;
-                break;
-            }
-            lastVariable = new Pair<>(name, type);
-        }
-        // if all types are the same, the operation is valid
-        if (valid) return null;
-
-        // Create error report
-        var message = String.format("Invalid operation: '%s' and '%s' have different types.", lastVariable.a, variableIfTheresError);
-        addReport(Report.newError(
-                Stage.SEMANTIC,
-                NodeUtils.getLine(binaryExpr),
-                NodeUtils.getColumn(binaryExpr),
-                message,
-                null)
-        );
 
         return null;
     }

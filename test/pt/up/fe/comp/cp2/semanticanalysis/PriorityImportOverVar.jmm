@@ -1,0 +1,10 @@
+import io;
+
+class PriorityImportOverVar {
+
+    public int a() {
+        int[] io;
+        return io.length;
+
+    }
+}
