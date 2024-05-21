@@ -54,9 +54,49 @@ public class JasminGenerator {
         generators.put(GetFieldInstruction.class, this::generateGetField);
         generators.put(CallInstruction.class, this::generateCallInstruction);
         generators.put(ArrayOperand.class,this::generateArrayElement);
-        generators.put(OpCondInstruction.class, this::generateBranch);
+        generators.put(CondBranchInstruction.class, this::generateCondInstruction);
         generators.put(GotoInstruction.class,this::generateGoTo);
     }
+
+    private String generateCondInstruction(CondBranchInstruction instruction) {
+        var code = new StringBuilder();
+        if(instruction.getCondition().getInstType().equals(InstructionType.BINARYOPER)) {
+            code.append(generateBinaryBranch((BinaryOpInstruction) instruction.getCondition()));
+            code.append(instruction.getLabel()).append(NL);
+        }
+         else {
+            code.append(generators.apply(instruction.getCondition()));
+            code.append("ifne ").append(instruction.getLabel());
+        }
+        return code.toString();
+    }
+
+    private String generateBinaryBranch(BinaryOpInstruction binaryOpInstruction) {
+        var code = new StringBuilder();
+        var op = binaryOpInstruction.getOperation().getOpType();
+        if (op.equals(OperationType.LTH) || op.equals(OperationType.GTE)) {
+
+            code.append(generators.apply(binaryOpInstruction.getLeftOperand()));
+            code.append(generators.apply(binaryOpInstruction.getRightOperand()));
+
+            code.append("isub").append(NL);
+
+            if (op.equals(OperationType.LTH)) {
+                code.append("iflt ");
+            } else if (op.equals(OperationType.GTE)) {
+                code.append("ifge ");
+            }
+        } else if (op.equals(OperationType.ANDB)) {
+            code.append(generators.apply(binaryOpInstruction.getLeftOperand()));
+            code.append(generators.apply(binaryOpInstruction.getRightOperand()));
+            code.append("iand").append(NL);
+            code.append("ifne ");
+        } else {
+            return null;
+        }
+        return code.toString();
+    }
+
 
     private String generateGoTo(GotoInstruction gotoInstruction) {
         var code = new StringBuilder();
@@ -176,9 +216,11 @@ public class JasminGenerator {
         code.append(TAB).append(".limit locals 99").append(NL);
 
         for (var inst : method.getInstructions()) {
+            for(var label : method.getLabels().entrySet()){
+                if(label.getValue().equals(inst)) code.append(label.getKey()).append(":").append(NL);
+            }
             var instCode = StringLines.getLines(generators.apply(inst)).stream()
                     .collect(Collectors.joining(NL + TAB, TAB, NL));
-
             code.append(instCode);
             if(inst.getInstType() == InstructionType.CALL && !(((CallInstruction) inst).getReturnType().toString().equals("VOID")))
                 code.append(TAB).append("pop").append(NL);
@@ -315,9 +357,10 @@ public class JasminGenerator {
             case DIV -> "idiv";
             case ADD -> "iadd";
             case SUB -> "isub";
-            case ANDB ->  "iand";
+            case ANDB -> "iand";
             case NOTB -> "ifeq";
-            case LTH -> "iflt";
+            case LTH -> "if_icmplt";
+            case GTE -> "if_icmpte";
             default -> throw new NotImplementedException(binaryOp.getOperation().getOpType());
         };
 
@@ -452,12 +495,6 @@ public class JasminGenerator {
         return code.toString();
     }
 
-    private String generateBranch(OpCondInstruction instruction) {
-        var code = new StringBuilder();
-        var op = instruction.getCondition();
-        code.append(generators.apply(op));
-        return code.toString();
-    }
 
     private String getImportedClassName(String className) {
 
