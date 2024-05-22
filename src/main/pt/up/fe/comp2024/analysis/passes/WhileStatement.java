@@ -49,8 +49,24 @@ public class WhileStatement extends AnalysisVisitor {
         // while body statement
         JmmNode bodyBlock = whileStmt.getChild(1);
 
+        // if condition is a boolean expression, return
+        if (TypeUtils.getExprType(condition, table).equals(new Type(TypeUtils.getBooleanTypeName(), false)))
+            return null;
+
+        // Create error report
+        var message = "Boolean expressions require a boolean expression as the condition";
+        addReport(Report.newError(
+                Stage.SEMANTIC,
+                NodeUtils.getLine(whileStmt),
+                NodeUtils.getColumn(whileStmt),
+                message,
+                null)
+        );
+
+        return null;
+
         // get binary expressions
-        List<JmmNode> binExprs = new ArrayList<>(condition.getDescendants(Kind.BINARY_EXPR));
+        /*List<JmmNode> binExprs = new ArrayList<>(condition.getDescendants(Kind.BINARY_EXPR));
         if (condition.hasAttribute("op")) binExprs.add(condition);
         Pair<Boolean, String> pair = allOperatorsValid(binExprs);
         // if there's an invalid operator, add error
@@ -88,7 +104,7 @@ public class WhileStatement extends AnalysisVisitor {
             }
         }
 
-        return null;
+        return null;*/
     }
 
 

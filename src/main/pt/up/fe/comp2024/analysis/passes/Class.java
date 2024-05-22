@@ -53,7 +53,23 @@ public class Class extends AnalysisVisitor {
                             .equals(TypeUtils.getStringTypeName()) &&
                             method.getChild(1).getChild(0).hasAttribute("array"))) {
                 // Create error report
-                var message = "Method main has the wrong arguments";
+                var message = "Method main has the wrong arguments.";
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(method),
+                        NodeUtils.getColumn(method),
+                        message,
+                        null)
+                );
+
+                return null;
+            }
+            // if method that does not return void has no return
+            if (!table.getReturnType(method.get("name"))
+                    .equals(new Type("void", false)) &&
+                    method.getChildren(Kind.RETURN_STMT).isEmpty()) {
+                // Create error report
+                var message = String.format("Method '%s' has no return.", method.get("name"));
                 addReport(Report.newError(
                         Stage.SEMANTIC,
                         NodeUtils.getLine(method),

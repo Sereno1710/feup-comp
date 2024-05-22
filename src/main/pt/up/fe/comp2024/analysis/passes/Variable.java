@@ -30,8 +30,7 @@ public class Variable extends AnalysisVisitor {
     private Void visitVarRefExpr(JmmNode varRefExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        // Check if exists a parameter or variable declaration with the same name as the variable reference
-        var varRefName = varRefExpr.get("name");
+        String varRefName = varRefExpr.get("name");
 
         // Var is a field and method is not static, return
         if (table.getFields().stream()
@@ -53,7 +52,7 @@ public class Variable extends AnalysisVisitor {
         }
 
         // Create error report
-        var message = String.format("Variable '%s' does not exist.", varRefName);
+        var message = String.format("Variable '%s' does not exist", varRefName);
         addReport(Report.newError(
                 Stage.SEMANTIC,
                 NodeUtils.getLine(varRefExpr),
