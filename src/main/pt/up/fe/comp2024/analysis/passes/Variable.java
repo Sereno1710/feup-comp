@@ -32,10 +32,9 @@ public class Variable extends AnalysisVisitor {
 
         String varRefName = varRefExpr.get("name");
 
-        // Var is a field and method is not static, return
-        if (table.getFields().stream()
-                .anyMatch(param -> param.getName().equals(varRefName)) &&
-                !Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
+        // Var is a declared variable, return
+        if (table.getLocalVariables(currentMethod).stream()
+                .anyMatch(varDecl -> varDecl.getName().equals(varRefName))) {
             return null;
         }
 
@@ -45,9 +44,10 @@ public class Variable extends AnalysisVisitor {
             return null;
         }
 
-        // Var is a declared variable, return
-        if (table.getLocalVariables(currentMethod).stream()
-                .anyMatch(varDecl -> varDecl.getName().equals(varRefName))) {
+        // Var is a field and method is not static, return
+        if (table.getFields().stream()
+                .anyMatch(param -> param.getName().equals(varRefName)) &&
+                !Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
             return null;
         }
 

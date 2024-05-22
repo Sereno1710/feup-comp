@@ -40,6 +40,7 @@ public class ExprTypes extends AnalysisVisitor {
         switch (operator) {
             case "+", "*", "-", "/", "<", ">", "<=", ">=" -> intOrBoolean = new Type(TypeUtils.getIntTypeName(), false);
             case "&&", "||", "!" -> intOrBoolean = new Type(TypeUtils.getBooleanTypeName(), false);
+            case "==", "!=" -> intOrBoolean = new Type("intOrBool", false);
         }
 
         if (intOrBoolean == null) {
@@ -54,6 +55,32 @@ public class ExprTypes extends AnalysisVisitor {
             );
 
             return null;
+        }
+
+        // if values can be int or boolean
+        if (intOrBoolean.getName().equals("intOrBool")) {
+            // if either value is not int or boolean
+            if ((!TypeUtils.getExprType(binaryExpr.getChild(0), table)
+                    .equals(new Type(TypeUtils.getIntTypeName(), false)) &&
+                    !TypeUtils.getExprType(binaryExpr.getChild(0), table)
+                            .equals(new Type(TypeUtils.getBooleanTypeName(), false)))
+                    ||
+                    (!TypeUtils.getExprType(binaryExpr.getChild(1), table)
+                            .equals(new Type(TypeUtils.getIntTypeName(), false)) &&
+                            !TypeUtils.getExprType(binaryExpr.getChild(1), table)
+                                    .equals(new Type(TypeUtils.getBooleanTypeName(), false)))) {
+                // Create error report
+                var message = String.format("Invalid operation: operator '%s' requires int or boolean types.", operator);
+                addReport(Report.newError(
+                        Stage.SEMANTIC,
+                        NodeUtils.getLine(binaryExpr),
+                        NodeUtils.getColumn(binaryExpr),
+                        message,
+                        null)
+                );
+
+                return null;
+            } else return null;
         }
 
         if (!TypeUtils.getExprType(binaryExpr.getChild(0), table).equals(intOrBoolean) ||

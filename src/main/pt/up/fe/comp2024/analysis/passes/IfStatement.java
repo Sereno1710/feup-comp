@@ -33,15 +33,6 @@ public class IfStatement extends AnalysisVisitor {
         return null;
     }
 
-    private Pair<Boolean, String> allOperatorsValid(List<JmmNode> binExprs) {
-        for (JmmNode expr : binExprs) {
-            if (!new ArrayList<>(Arrays.asList(">", "<", "<=", ">=", "!")).contains(expr.get("op"))) {
-                return new Pair<>(false, expr.get("op"));
-            }
-        }
-        return new Pair<>(true, null);
-    }
-
     private Void visitIfStmt(JmmNode ifStmt, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
@@ -52,44 +43,19 @@ public class IfStatement extends AnalysisVisitor {
         // else statement block
         JmmNode elseBlock = ifStmt.getChild(2);
 
-        // get binary expressions
-        List<JmmNode> binExprs = new ArrayList<>(condition.getDescendants(Kind.BINARY_EXPR));
-        if (condition.hasAttribute("op")) binExprs.add(condition);
-        Pair<Boolean, String> pair = allOperatorsValid(binExprs);
-        // if there's an invalid operator, add error
-        if (!pair.a) {
-            // Create error report
-            var message = String.format("Operator '%s' is not valid for boolean expressions", pair.b);
-            addReport(Report.newError(
-                    Stage.SEMANTIC,
-                    NodeUtils.getLine(ifStmt),
-                    NodeUtils.getColumn(ifStmt),
-                    message,
-                    null)
-            );
+        // if condition is a boolean expression, return
+        if (TypeUtils.getExprType(condition, table).equals(new Type(TypeUtils.getBooleanTypeName(), false)))
             return null;
-        }
 
-        if (condition.getChildren().isEmpty()) {
-            if (!TypeUtils.getExprType(condition, table).equals(new Type(TypeUtils.getBooleanTypeName(), false))) {
-                String name;
-                if (condition.hasAttribute("name")) {
-                    name = condition.get("name");
-                } else {
-                    name = condition.get("value");
-                }
-                // Create error report
-                var message = String.format("Variable '%s' is not boolean", name);
-                addReport(Report.newError(
-                        Stage.SEMANTIC,
-                        NodeUtils.getLine(ifStmt),
-                        NodeUtils.getColumn(ifStmt),
-                        message,
-                        null)
-                );
-                return null;
-            }
-        }
+        // Create error report
+        var message = "If statements require a boolean expression as the condition";
+        addReport(Report.newError(
+                Stage.SEMANTIC,
+                NodeUtils.getLine(ifStmt),
+                NodeUtils.getColumn(ifStmt),
+                message,
+                null)
+        );
 
         return null;
     }

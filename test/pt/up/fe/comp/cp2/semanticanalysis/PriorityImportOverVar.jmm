@@ -2,9 +2,9 @@ import io;
 
 class PriorityImportOverVar {
 
-    public int a() {
-        int[] io;
-        return io.length;
-
+    public int foo() {
+        PriorityImportOverVar io;
+        io = new PriorityImportOverVar();
+        return io.foo();
     }
 }
