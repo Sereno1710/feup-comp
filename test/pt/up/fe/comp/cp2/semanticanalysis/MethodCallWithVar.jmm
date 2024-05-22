@@ -1,0 +1,14 @@
+import A;
+
+class ClassImported extends A {
+
+    public static void main(String[] args) {
+
+    }
+
+    public int foo() {
+        int a;
+        a = A.bar(a,a,a);
+        return a;
+    }
+}

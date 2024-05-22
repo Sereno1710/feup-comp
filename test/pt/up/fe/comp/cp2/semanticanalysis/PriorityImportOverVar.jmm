@@ -5,6 +5,6 @@ class PriorityImportOverVar {
     public int foo() {
         PriorityImportOverVar io;
         io = new PriorityImportOverVar();
-        return io.foo();
+        return io.func();
     }
 }
