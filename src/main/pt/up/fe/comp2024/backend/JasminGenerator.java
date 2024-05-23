@@ -86,7 +86,8 @@ public class JasminGenerator {
     private String generateBinaryBranch(BinaryOpInstruction binaryOpInstruction) {
         var code = new StringBuilder();
         var op = binaryOpInstruction.getOperation().getOpType();
-        if (op.equals(OperationType.LTH) || op.equals(OperationType.GTE)) {
+        if (op.equals(OperationType.LTH) || op.equals(OperationType.GTE) || op.equals(OperationType.GTH)
+        || op.equals(OperationType.LTE) || op.equals(OperationType.EQ) || op.equals(OperationType.NEQ)    ) {
 
             code.append(generators.apply(binaryOpInstruction.getLeftOperand()));
             code.append(generators.apply(binaryOpInstruction.getRightOperand()));
@@ -97,6 +98,14 @@ public class JasminGenerator {
                 code.append("iflt ");
             } else if (op.equals(OperationType.GTE)) {
                 code.append("ifge ");
+            } else if (op.equals(OperationType.GTH)) {
+                code.append("ifgt ");
+            } else if (op.equals(OperationType.LTE)) {
+                code.append("ifle ");
+            } else if (op.equals(OperationType.EQ)) {
+                code.append("ifeq ");
+            } else if (op.equals(OperationType.NEQ)) {
+                code.append("ifne ");
             }
         } else if (op.equals(OperationType.ANDB)) {
             code.append(generators.apply(binaryOpInstruction.getLeftOperand()));
