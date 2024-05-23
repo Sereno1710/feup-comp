@@ -29,9 +29,6 @@ public class ArrayAccess extends AnalysisVisitor {
     private Void visitAccExpr(JmmNode accExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        String name = "";
-        if (accExpr.getChild(0).hasAttribute("name")) name = accExpr.getChild(0).get("name");
-
         Type arrayType = TypeUtils.getExprType(accExpr.getChild(0), table);
         Type accessVarType = TypeUtils.getExprType(accExpr.getChild(1), table);
         // if variable is an array or varargs and access is an int
@@ -59,7 +56,7 @@ public class ArrayAccess extends AnalysisVisitor {
         }
 
         // Create error report
-        var message = String.format("Invalid operation: '%s' is not an array.", name);
+        var message = "Invalid operation: access expression can only be used on an array.";
         addReport(Report.newError(
                 Stage.SEMANTIC,
                 NodeUtils.getLine(accExpr),

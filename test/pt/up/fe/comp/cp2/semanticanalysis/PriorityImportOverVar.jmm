@@ -1,0 +1,10 @@
+import io;
+
+class PriorityImportOverVar {
+
+    public int foo() {
+        PriorityImportOverVar io;
+        io = new PriorityImportOverVar();
+        return io.func();
+    }
+}

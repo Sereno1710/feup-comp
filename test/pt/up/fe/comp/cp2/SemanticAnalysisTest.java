@@ -355,4 +355,25 @@ public class SemanticAnalysisTest {
         System.out.println(result.getReports());
         TestUtils.mustFail(result);
     }
+
+    @Test
+    public void AssignIntToFunc() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/AssignIntToFunc.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void MethodCallWithVar() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/MethodCallWithVar.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void PriorityImportOverVar() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/PriorityImportOverVar.jmm"));
+        TestUtils.noErrors(result);
+    }
 }

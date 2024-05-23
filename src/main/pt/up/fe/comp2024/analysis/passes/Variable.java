@@ -30,13 +30,11 @@ public class Variable extends AnalysisVisitor {
     private Void visitVarRefExpr(JmmNode varRefExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        // Check if exists a parameter or variable declaration with the same name as the variable reference
-        var varRefName = varRefExpr.get("name");
+        String varRefName = varRefExpr.get("name");
 
-        // Var is a field and method is not static, return
-        if (table.getFields().stream()
-                .anyMatch(param -> param.getName().equals(varRefName)) &&
-                !Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
+        // Var is a declared variable, return
+        if (table.getLocalVariables(currentMethod).stream()
+                .anyMatch(varDecl -> varDecl.getName().equals(varRefName))) {
             return null;
         }
 
@@ -46,14 +44,15 @@ public class Variable extends AnalysisVisitor {
             return null;
         }
 
-        // Var is a declared variable, return
-        if (table.getLocalVariables(currentMethod).stream()
-                .anyMatch(varDecl -> varDecl.getName().equals(varRefName))) {
+        // Var is a field and method is not static, return
+        if (table.getFields().stream()
+                .anyMatch(param -> param.getName().equals(varRefName)) &&
+                !Boolean.parseBoolean(currentMethodNode.get("isStatic"))) {
             return null;
         }
 
         // Create error report
-        var message = String.format("Variable '%s' does not exist.", varRefName);
+        var message = String.format("Variable '%s' does not exist", varRefName);
         addReport(Report.newError(
                 Stage.SEMANTIC,
                 NodeUtils.getLine(varRefExpr),
