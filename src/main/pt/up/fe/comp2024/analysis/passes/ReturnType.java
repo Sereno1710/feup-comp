@@ -44,8 +44,10 @@ public class ReturnType extends AnalysisVisitor {
         }
 
         // if return types are correct
-        if (table.getReturnType(returnStmt.getParent().get("name"))
-                .equals(TypeUtils.getExprType(returnStmt.getChild(0), table)))
+        Type type = TypeUtils.getExprType(returnStmt.getChild(0), table);
+        if (table.getReturnType(returnStmt.getParent().get("name")).equals(type))
+            return null;
+        if (type != null && type.hasAttribute("assignable"))
             return null;
 
         // Create error report

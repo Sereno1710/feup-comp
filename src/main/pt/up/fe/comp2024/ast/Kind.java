@@ -32,6 +32,7 @@ public enum Kind {
     PAREN_EXPR,
     NOT_EXPR,
     LENGTH_EXPR,
+    ASSIGN_STMT_ARRAY,
     ;
 
 

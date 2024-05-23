@@ -131,10 +131,18 @@ public class TypeUtils {
             if (curr.getKind().equals(Kind.METHOD_DECL.toString())) {
                 List<Symbol> params = table.getParameters(curr.get("name"));
                 type = lookForSymbolInList(params, className);
-                if (type != null) return type;
+                if (type != null) {
+                    if (type.getName().equals(table.getClassName())) return type;
+                    type.putObject("imported", true);
+                    return type;
+                }
                 List<Symbol> locals = table.getLocalVariables(curr.get("name"));
                 type = lookForSymbolInList(locals, className);
-                if (type != null) return type;
+                if (type != null) {
+                    if (type.getName().equals(table.getClassName())) return type;
+                    type.putObject("imported", true);
+                    return type;
+                }
                 break;
             }
             curr = curr.getParent();
@@ -154,22 +162,18 @@ public class TypeUtils {
 
     private static Type getVarExprTypeFromFuncExpr(JmmNode expr, SymbolTable table) {
         String methodName;
-        String className = "";
-        if (expr.hasAttribute("name")) methodName = expr.get("name");
-        else {
-            List<JmmNode> classChainExprs = expr.getDescendants(Kind.CLASS_CHAIN_EXPR);
-            List<String> classNames = classChainExprs.get(0).getObjectAsList("className", String.class);
-            methodName = classNames.get(1);
-            className = classNames.get(0);
-        }
+        List<JmmNode> classChainExprs = expr.getDescendants(Kind.CLASS_CHAIN_EXPR);
+        List<String> classNames = classChainExprs.get(0).getObjectAsList("className", String.class);
+        methodName = expr.hasAttribute("name") ? expr.get("name") : classNames.get(classNames.size() - 1);
 
-        // if method is not defined in this file, return type
-        if (!table.getMethods().contains(methodName)) {
-            if (!Objects.equals(className, "") && !Objects.equals(table.getClassName(), className)) {
-                Type type = new Type("", false);
-                type.putObject("assignable", true);
-                return type;
-            }
+        // if class is imported, assume type is okay
+        Type classType = getClassFromClassChain(classChainExprs.get(0), table);
+        if (classType != null && (classType.hasAttribute("imported") ||
+                (classType.hasAttribute("classChain") && table.getImports().stream()
+                        .anyMatch(importDecl -> importDecl.equals(classType.getName()))))) {
+            Type type = new Type("", false);
+            type.putObject("assignable", true);
+            return type;
         }
 
         JmmNode root = expr;

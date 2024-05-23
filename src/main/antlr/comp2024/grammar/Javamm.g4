@@ -119,7 +119,7 @@ stmt
     | WHILE LPAREN expr RPAREN stmt #WhileStmt
     | FOR LPAREN stmt expr SEMI expr RPAREN stmt #ForStmt
     | name=(ID | 'main' | 'length') EQUALS expr SEMI #AssignStmt //
-    | name=(ID | 'main' | 'length') LRET expr RRET EQUALS expr SEMI #AssignStmt
+    | name=(ID | 'main' | 'length') LRET expr RRET EQUALS expr SEMI #AssignStmtArray
     ;
 
 
