@@ -57,6 +57,17 @@ public class JasminGenerator {
         generators.put(CondBranchInstruction.class, this::generateCondInstruction);
         generators.put(GotoInstruction.class,this::generateGoTo);
         generators.put(UnaryOpInstruction.class,this::generateUnary);
+        generators.put(SingleOpCondInstruction.class,this::generateSingleOpCond);
+    }
+
+    private String generateSingleOpCond(SingleOpCondInstruction singleOpCondInstruction) {
+        var code = new StringBuilder();
+        if(singleOpCondInstruction.getCondition().getInstType().equals(InstructionType.NOPER)){
+            code.append(generators.apply(singleOpCondInstruction.getCondition().getSingleOperand()));
+            code.append("ifne ").append(singleOpCondInstruction.getLabel()).append(NL);
+        }
+        else return null;
+        return code.toString();
     }
 
     private String generateCondInstruction(CondBranchInstruction instruction) {
@@ -65,9 +76,9 @@ public class JasminGenerator {
             code.append(generateBinaryBranch((BinaryOpInstruction) instruction.getCondition()));
             code.append(instruction.getLabel()).append(NL);
         }
-         else {
-            code.append(generators.apply(instruction.getCondition()));
-            code.append("ifne ").append(instruction.getLabel());
+        else if(instruction.getCondition().getInstType().equals(InstructionType.UNARYOPER)){
+            code.append(generateUnary((UnaryOpInstruction) instruction.getCondition()));
+            code.append("ifeq ").append(instruction.getLabel()).append(NL);
         }
         return code.toString();
     }
@@ -288,21 +299,63 @@ public class JasminGenerator {
             default: return null;
         }
     }
-
     private String generateAssign(AssignInstruction assign) {
         var code = new StringBuilder();
 
-        // generate code for loading what's on the right
         code.append(generators.apply(assign.getRhs()));
 
-        // store value in the stack in destination
         var lhs = assign.getDest();
-
+        var rhs = assign.getRhs();
         if (lhs instanceof ArrayOperand) {
             code.append("aload ").append(currentMethod.getVarTable().get(((ArrayOperand) lhs).getName()).getVirtualReg()).append(NL);
-            var temp = ((ArrayOperand) lhs).getIndexOperands().get(0);
-            code.append(generators.apply(temp));
+            code.append(generators.apply(((ArrayOperand) lhs).getIndexOperands().get(0)));
             code.append(generators.apply(assign.getRhs()));
+        }
+        if(rhs instanceof BinaryOpInstruction rhs_b){
+            if((rhs_b.getOperation().getOpType().equals(OperationType.ADD)) || (rhs_b.getOperation().getOpType().equals(OperationType.SUB))){
+                Element left = rhs_b.getLeftOperand();
+                Element right = rhs_b.getRightOperand();
+                boolean realInc = false;
+                boolean range_byte = false;
+                if(left.isLiteral() && !right.isLiteral()){
+                     realInc = right.equals(assign.getDest());
+                     LiteralElement n = (LiteralElement) rhs_b.getLeftOperand();
+                    int val = Integer.parseInt(n.getLiteral());
+                    if(right.equals(lhs)){
+                        realInc = true;
+                    }
+                    if(rhs_b.getOperation().getOpType().equals(OperationType.SUB)){
+                        val= -val;
+                    }
+                    n.setLiteral(Integer.toString(val));
+                    if(Integer.parseInt(n.getLiteral()) >= -128 && Integer.parseInt(n.getLiteral()) <= 127){
+                        range_byte = true;
+                    }
+                     if(range_byte && realInc){
+                         code.append("iinc ").append(currentMethod.getVarTable().get(((Operand) lhs).getName()).getVirtualReg()).append(NL);
+                         return code.toString();
+                     }
+                }
+                else if(right.isLiteral() && !left.isLiteral()){
+                    realInc = left.equals(assign.getDest());
+                    LiteralElement n = (LiteralElement) rhs_b.getRightOperand();
+                    int val = Integer.parseInt(n.getLiteral());
+                    if(left.equals(lhs)){
+                        realInc = true;
+                    }
+                    if(rhs_b.getOperation().getOpType().equals(OperationType.SUB)){
+                        val= -val;
+                    }
+                    n.setLiteral(Integer.toString(val));
+                    if(Integer.parseInt(n.getLiteral()) >= -128 && Integer.parseInt(n.getLiteral()) <= 127){
+                        range_byte = true;
+                    }
+                    if(range_byte && realInc){
+                        code.append("iinc ").append(currentMethod.getVarTable().get(((Operand) lhs).getName()).getVirtualReg()).append(NL);
+                        return code.toString();
+                    }
+                }
+            }
         }
         var operand = (Operand) lhs;
 

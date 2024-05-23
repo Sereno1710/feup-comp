@@ -10,7 +10,7 @@ class IfWhileNested {
         flag = true;
         i = 0;
         while (i < a) {
-            if(flag){
+            if(1){
 				ioPlus.printResult(1);
 			} else {
 				ioPlus.printResult(2);
