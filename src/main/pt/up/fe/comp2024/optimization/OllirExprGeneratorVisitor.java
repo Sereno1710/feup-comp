@@ -112,8 +112,14 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
 
         var importedLib = false;
         for (var importLib : table.getImports()) {
-            if (importLib.equals(libName)) {
-                importedLib = true;
+            String[] parts = importLib.split("\\.");
+            for (String part : parts) {
+                if (part.equals(libName)) {
+                    importedLib = true;
+                    break;
+                }
+            }
+            if (importedLib) {
                 break;
             }
         }
@@ -133,15 +139,24 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
             code.append(functionName);
             code.append("\"");
             code.append(funcParamsCode);
-            code.append(").V");
-            code.append(END_STMT);
+            if(Objects.equals(node.getParent().getKind(), "AssignStmt")) {
+                var parentType = TypeUtils.getTypeFromString(node.getParent().get("name"), node.getParent(), table);
+                String parentTypeString = OptUtils.toOllirType(parentType);
+                code.append(parentTypeString);
+            } else if(Objects.equals(node.getParent().getKind(), "AssignStmt")){
+
+            }else {
+                code.append(").V");
+                code.append(END_STMT);
+            }
         } else {
-            Type resType = TypeUtils.getExprType(node, table);
-            String resOllirType = OptUtils.toOllirType(resType);
             Type classType = TypeUtils.getClassFromClassChain(classChainExpr, table);
             String classOllirType = OptUtils.toOllirType(classType);
 
             if(Objects.equals(node.getParent().getKind(), "ExprStmt")) {
+                Type resType = TypeUtils.getExprType(node, table);
+                String resOllirType = OptUtils.toOllirType(resType);
+
                 code.append("invokevirtual(");
                 code.append(libName);
                 code.append(classOllirType);
@@ -153,11 +168,14 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
                 code.append(resOllirType);
                 code.append(END_STMT);
             } else {
+                var parentType = TypeUtils.getTypeFromString(node.getParent().get("name"), node.getParent(), table);
+                String parentTypeString = OptUtils.toOllirType(parentType);
+
                 String temp = OptUtils.getTemp();
-                code.append(temp).append(resOllirType);
+                code.append(temp).append(parentTypeString);
 
                 computation.append(code).append(SPACE)
-                        .append(ASSIGN).append(resOllirType).append(SPACE);
+                        .append(ASSIGN).append(parentTypeString).append(SPACE);
 
                 computation.append("invokevirtual(");
                 computation.append(libName);
@@ -167,7 +185,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
                 computation.append("\"");
                 computation.append(funcParamsCode);
                 computation.append(")");
-                computation.append(resOllirType);
+                computation.append(parentTypeString);
                 computation.append(END_STMT);
             }
         }
