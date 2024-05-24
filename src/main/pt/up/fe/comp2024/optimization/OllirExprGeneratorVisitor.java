@@ -112,7 +112,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
 
         var importedLib = false;
         for (var importLib : table.getImports()) {
-            if (importLib.contains(libName)) {
+            if (importLib.equals(libName)) {
                 importedLib = true;
                 break;
             }
