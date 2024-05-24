@@ -129,7 +129,8 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
 
         computation.append(n.getComputation()).append(code).append(SPACE)
                 .append(ASSIGN).append(ollirType).append(SPACE).append(node.getJmmChild(0).get("name"))
-                .append("[").append(n.getCode()).append("]").append(ollirType).append(END_STMT);
+                .append(ollirType).append(".array").append("[").append(n.getCode()).append("]").append(ollirType)
+                .append(END_STMT);
 
         return new OllirExprResult(code, computation);
     }
