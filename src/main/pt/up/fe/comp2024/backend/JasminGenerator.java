@@ -464,7 +464,6 @@ public class JasminGenerator {
                 args=-1;
                 if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.ARRAYREF)){
                     for(Element elem: callInstruction.getArguments()){
-                        args++;
                         code.append(generators.apply(elem));
                     }
                     code.append("newarray int").append(NL);
@@ -472,7 +471,6 @@ public class JasminGenerator {
                 }
                 else {
                     for(Element elem: callInstruction.getArguments()){
-                        args++;
                         code.append(generators.apply(elem));
                     }
                 }
