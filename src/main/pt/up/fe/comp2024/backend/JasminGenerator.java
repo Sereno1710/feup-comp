@@ -37,6 +37,8 @@ public class JasminGenerator {
     private int limits_stack = 0;
     private int continuos_stack = 0;
     private int limits_locals = 0;
+
+    private int conds = 0;
     public JasminGenerator(OllirResult ollirResult) {
         this.ollirResult = ollirResult;
         classUnit = this.ollirResult.getOllirClass();
@@ -146,6 +148,7 @@ public class JasminGenerator {
         currentMethod = method;
         limits_stack = 0;
         limits_locals = 0;
+
         Set<Integer> v = new HashSet<Integer>();
         for(var i : currentMethod.getVarTable().values()){
             v.add(i.getVirtualReg());
@@ -290,6 +293,20 @@ public class JasminGenerator {
                     return code.toString();
                 }
             }
+            else if(rhs_b.getOperation().getOpType().equals(OperationType.LTH)){
+                code.append(generators.apply(rhs_b.getRightOperand()));
+                code.append(generators.apply(rhs_b.getLeftOperand()));
+                code.append("isub").append(NL);
+                code.append("iflt ").append("iflt_").append(conds).append("_true").append(NL);
+                code.append("iconst_0").append(NL);
+                code.append("goto ").append("iflt_").append(conds).append("_end").append(NL);
+                code.append("iflt_").append(conds).append("_true:").append(NL);
+                code.append("iconst_1").append(NL);
+                code.append(NL);
+                code.append("iflt_").append(conds).append("_end:").append(NL);
+                conds++;
+                return code.toString();
+            }
         }
 
 
@@ -308,7 +325,7 @@ public class JasminGenerator {
                 code.append(generators.apply(i));
             }
             code.append(generators.apply(rhs));
-            changeStack(1);
+            changeStack(-1);
         }
 
         // Get register
@@ -411,7 +428,7 @@ public class JasminGenerator {
     }
     private String generatePutField(PutFieldInstruction putField) {
         var code = new StringBuilder();
-        changeStack(-2);
+
         code.append(generators.apply(putField.getOperands().get(0)));
         code.append(generators.apply(putField.getOperands().get(2)));
 
@@ -419,7 +436,7 @@ public class JasminGenerator {
         var fieldName = putField.getField().getName();
         var fieldType = transformType(putField.getField().getType());
         code.append("putfield ").append(className).append("/").append(fieldName).append(" ").append(fieldType).append(NL);
-
+        changeStack(-2);
         return code.toString();
     }
 
@@ -434,7 +451,6 @@ public class JasminGenerator {
         var fieldType = transformType(getField.getField().getType());
         code.append("getfield ").append(className).append("/").append(fieldName).append(" ").append(fieldType).append(NL);
 
-        changeStack(1);
         return code.toString();
     }
     private String generateReturn(ReturnInstruction returnInst) {
