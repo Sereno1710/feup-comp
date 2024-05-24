@@ -6,7 +6,7 @@ IfWhileNested {
     }
 
     .method public func(a.i32).i32 {
-flag.bool :=.bool 1.bool;
+flag.bool :=.bool 3.i32 <.bool 5.i32;
 i.i32 :=.i32 0.i32;
 if (i.i32 <.bool a.i32) goto whilebody_1;
 goto endwhile_1;
