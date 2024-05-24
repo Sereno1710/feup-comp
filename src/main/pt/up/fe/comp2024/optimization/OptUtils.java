@@ -36,6 +36,8 @@ public class OptUtils {
 
         String typeName = typeNode.get("name");
 
+        if (typeNode.hasAttribute("array")) return ".array" + toOllirType(typeName);
+
         return toOllirType(typeName);
     }
 
