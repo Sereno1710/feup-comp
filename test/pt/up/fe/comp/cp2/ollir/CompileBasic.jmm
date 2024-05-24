@@ -1,16 +1,21 @@
-import io;
-import Quicksort;
-class CompileBasic extends Quicksort {
-    int intField;
-    boolean boolField;
-    public int method1() {
-        int intLocal1;
-        boolean boolLocal1;
-        return 0;
+import ioPlus.A;
+class ConditionArgsFuncCall {
+
+    public int func(boolean a, boolean b, boolean c, boolean d){
+        ioPlus.printResult(10);
+        return 1;
     }
-    public boolean method2(int intParam1, boolean boolParam1) {
-        return boolParam1;
-    }
+
     public static void main(String[] args) {
+        int a;
+        int b;
+        boolean i;
+        boolean j;
+        ConditionArgsFuncCall d;
+        d = new ConditionArgsFuncCall();
+        a = 10;
+        b = 5;
+        i = true;
+        j = false;
     }
 }
