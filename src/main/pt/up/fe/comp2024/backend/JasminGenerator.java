@@ -194,8 +194,8 @@ public class JasminGenerator {
                 changeStack(-1);
             }
         }
-        final_code.append(".limit stack 99").append(NL); //.append(limits_stack).append(NL);
-        final_code.append(".limit locals 99").append(NL); //.append(limits_locals).append(NL);
+        final_code.append(".limit stack ").append(limits_stack).append(NL);
+        final_code.append(".limit locals ").append(limits_locals).append(NL);
         final_code.append(code);
         final_code.append(".end method\n");
 
