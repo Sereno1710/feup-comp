@@ -127,13 +127,6 @@ expr
     : className+=(ID | 'this' | 'main') (DOT className+=(ID | 'main'))+ #ClassChainExpr
     | expr (DOT name=(ID | 'main'))* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
     | expr LRET expr RRET #AccExpr
-    | NOT expr #NotExpr
-    | expr op=(MUL  | DIV | REM) expr #BinaryExpr //
-    | expr op=(ADD | SUB) expr #BinaryExpr //
-    | expr op=(LS | LE | GR | GE) expr #BinaryExpr
-    | expr op=(EQ | NEQ) expr #BinaryExpr
-    | expr op=AND expr #BinaryExpr
-    | expr op=OR expr #BinaryExpr
     | expr (DOT 'length') #LengthExpr
     | NEW type LRET expr RRET #NewArray
     | NEW name=(ID | 'main') LPAREN expr* RPAREN #NewClassExpr
@@ -144,6 +137,13 @@ expr
     | value='false' #BooleanLiteral
     | name=(ID | 'main' | 'length') #VarRefExpr //
     | value='this' #ObjectLiteral
+    | NOT expr #NotExpr
+    | expr op=(MUL  | DIV | REM) expr #BinaryExpr //
+    | expr op=(ADD | SUB) expr #BinaryExpr //
+    | expr op=(LS | LE | GR | GE) expr #BinaryExpr
+    | expr op=(EQ | NEQ) expr #BinaryExpr
+    | expr op=AND expr #BinaryExpr
+    | expr op=OR expr #BinaryExpr
     ;
 
 

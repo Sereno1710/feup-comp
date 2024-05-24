@@ -104,6 +104,9 @@ public class ExprTypes extends AnalysisVisitor {
     private Void visitNewClassExpr(JmmNode newClassExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
+        if (!newClassExpr.getParent().getKind().equals(Kind.ASSIGN_STMT.toString()) &&
+                !newClassExpr.getParent().getKind().equals(Kind.ASSIGN_STMT_ARRAY.toString()))
+            return null;
         String varName = "";
         if (newClassExpr.getParent().hasAttribute("name")) {
             varName = newClassExpr.getParent().get("name");

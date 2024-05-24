@@ -75,7 +75,7 @@ public class JmmSymbolTableBuilder {
                             JmmNode params = method.getChild(1);
 
                             for (var param : params.getChildren()) {
-                                Type type = new Type(param.getChild(0).get("name"), param.hasAttribute("array"));
+                                Type type = new Type(param.getChild(0).get("name"), param.getChild(0).hasAttribute("array"));
                                 if (param.getChild(0).hasAttribute("vargs")) type.putObject("vargs", true);
                                 symbols.add(new Symbol(type, param.get("name")));
                             }
