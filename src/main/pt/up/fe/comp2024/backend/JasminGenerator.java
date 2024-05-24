@@ -318,7 +318,6 @@ public class JasminGenerator {
         if (lhs.getType().getTypeOfElement().equals(ElementType.INT32) ||
                 lhs.getType().getTypeOfElement().equals(ElementType.BOOLEAN)) {
             if (currentMethod.getVarTable().get(((Operand) lhs).getName()).getVarType().getTypeOfElement().equals(ElementType.ARRAYREF)) {
-                changeStack(-2);
                 code.append("iastore").append(NL);
             } else {
                 changeStack(-1);
@@ -623,7 +622,6 @@ public class JasminGenerator {
 
         if (op.equals(OperationType.NOTB)) {
             code.append(generators.apply(operand));
-
             code.append("iconst_1").append(NL);
             code.append("ixor").append(NL);
         } else {
