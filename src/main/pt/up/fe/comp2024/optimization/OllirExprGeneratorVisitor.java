@@ -36,6 +36,8 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         addVisit(NEW_CLASS_EXPR, this::visitNewClassExpr);
         addVisit(BOOLEAN_LITERAL, this::visitBoolean);
         addVisit(NOT_EXPR, this::visitNotExpr);
+        addVisit(NEW_ARRAY, this::visitNewArray);
+        addVisit(LENGTH_EXPR, this::visitLengthExpr);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -59,6 +61,35 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         }
         String code = value + ollirIntType;
         return new OllirExprResult(code);
+    }
+
+    private OllirExprResult visitNewArray(JmmNode node, Void unused) {
+        String ollirType = ".array" + OptUtils.toOllirType(node.getJmmChild(0));
+
+        String code = OptUtils.getTemp() + ollirType;
+
+        StringBuilder computation = new StringBuilder();
+
+        computation.append(code).append(SPACE)
+                .append(ASSIGN).append(ollirType).append(SPACE).append("new(array, ").append(visit(node.getJmmChild(1)).getCode())
+                .append(")").append(ollirType).append(END_STMT);
+
+        return new OllirExprResult(code, computation);
+    }
+
+    private OllirExprResult visitLengthExpr(JmmNode node, Void unused) {
+        Type type = TypeUtils.getExprType(node, table);
+        String ollirType = OptUtils.toOllirType(type);
+
+        String code = OptUtils.getTemp() + ollirType;
+
+        StringBuilder computation = new StringBuilder();
+
+        computation.append(code).append(SPACE)
+                .append(ASSIGN).append(ollirType).append(SPACE).append("arraylength(")
+                .append(visit(node.getJmmChild(0)).getCode()).append(")").append(ollirType).append(END_STMT);
+
+        return new OllirExprResult(code, computation);
     }
 
 
@@ -165,7 +196,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
             var childCode = visit(child);
             funcParamsCode.append(", ");
             funcParamsCode.append(childCode.getCode());
-            computation.append(childCode.getComputation());
+            code.append(childCode.getComputation());
         }
 
         if (importedLib) {
