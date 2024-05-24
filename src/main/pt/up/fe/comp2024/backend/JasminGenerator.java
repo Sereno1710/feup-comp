@@ -296,13 +296,14 @@ public class JasminGenerator {
         code.append(generators.apply(rhs));
 
         // ArrayOperand handling (if lhs is an array element)
-        if (lhs instanceof ArrayOperand) {
+        if (lhs instanceof ArrayOperand array) {
             changeStack(1);
-
-            code.append("aload ")
-                    .append(currentMethod.getVarTable().get(((ArrayOperand) lhs).getName()).getVirtualReg())
+            var reg = currentMethod.getVarTable().get((array).getName()).getVirtualReg();
+            if( reg < 4) code.append("aload_").append(reg).append(NL);
+            else code.append("aload ")
+                    .append(reg)
                     .append(NL);
-            var temp = ((ArrayOperand) lhs).getIndexOperands().get(0);
+            var temp = array.getIndexOperands().get(0);
             code.append(generators.apply(temp));
             code.append(generators.apply(rhs));
             changeStack(1);
@@ -315,7 +316,7 @@ public class JasminGenerator {
         if (lhs.getType().getTypeOfElement().equals(ElementType.INT32) ||
                 lhs.getType().getTypeOfElement().equals(ElementType.BOOLEAN)) {
             if (currentMethod.getVarTable().get(((Operand) lhs).getName()).getVarType().getTypeOfElement().equals(ElementType.ARRAYREF)) {
-                changeStack(-3);
+                changeStack(-1);
                 code.append("iastore").append(NL);
             } else {
                 changeStack(-1);
