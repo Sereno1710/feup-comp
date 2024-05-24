@@ -222,11 +222,16 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
 
         var importedLib = false;
         for (var importLib : table.getImports()) {
-            String[] parts = importLib.split("\\.");
-            for (String part : parts) {
-                if (part.equals(libName)) {
-                    importedLib = true;
-                    break;
+            if (importLib.equals(libName) || importLib.endsWith("." + libName)) {
+                importedLib = true;
+                break;
+            } else {
+                String[] parts = importLib.split("\\.");
+                for (String part : parts) {
+                    if (part.equals(libName)) {
+                        importedLib = true;
+                        break;
+                    }
                 }
             }
             if (importedLib) {
