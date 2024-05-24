@@ -489,7 +489,7 @@ public class JasminGenerator {
                     param.append(transformType(arg.getType()));
                 }
                 code.append("invokespecial ").append(methodName).append("/<init>").append("(").append(param).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
-                if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) {
+                if(!callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) {
                     args--;
                 }
             }
@@ -509,7 +509,7 @@ public class JasminGenerator {
                 var methodName2 = second.getLiteral().replace("\"","");
 
                 code.append(type).append(" ").append(getImportedClassName(((ClassType) first.getType()).getName())).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
-                if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) args--;
+                if(!callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) args--;
             }
             case "invokestatic" -> {
                 code.append(generators.apply(first));
@@ -526,7 +526,7 @@ public class JasminGenerator {
                 code.append("invokestatic ");
                 code.append(getImportedClassName(((Operand) callInstruction.getCaller()).getName()));
                 code.append("/").append(second.getLiteral().replace("\"", "")).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
-                if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) args--;
+                if(!callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) args--;
             }
             case "arraylength" -> {
                 code.append(generators.apply(callInstruction.getCaller())).append("arraylength").append(NL);
