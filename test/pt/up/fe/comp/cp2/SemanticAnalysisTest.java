@@ -383,4 +383,144 @@ public class SemanticAnalysisTest {
                 .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/ClassInitFuncCall.jmm"));
         TestUtils.noErrors(result);
     }
+
+    @Test
+    public void array1() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/array1.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void basicfuncs() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/basicfuncs.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void basicprints() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/basicprints.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void callhell() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/callhell.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void crazyobj() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/crazyobj.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void fields() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/fields.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void hard1() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/hard1.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void HelloWorld() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/HelloWorld.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void if_() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/if.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void ifhell() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/ifhell.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void manyassign() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/manyassign.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void multarr() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/multarr.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void printarr() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/printarr.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void prop1() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/prop1.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void prop2() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/prop2.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void prop3() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/prop3.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void returnobj() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/returnobj.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void thisRet() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/thisRet.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void unused_const_fold_prop() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/unused_const_fold_prop.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void while_() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/while.jmm"));
+        TestUtils.noErrors(result);
+    }
 }
