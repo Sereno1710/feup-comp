@@ -376,4 +376,11 @@ public class SemanticAnalysisTest {
                 .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/PriorityImportOverVar.jmm"));
         TestUtils.noErrors(result);
     }
+
+    @Test
+    public void ClassInitFuncCall() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/ClassInitFuncCall.jmm"));
+        TestUtils.noErrors(result);
+    }
 }

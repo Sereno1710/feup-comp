@@ -36,9 +36,15 @@ public class MethodCalls extends AnalysisVisitor {
     private boolean checkMethodExists(JmmNode funcExpr, SymbolTable table) {
         SpecsCheck.checkNotNull(currentMethod, () -> "Expected current method to be set");
 
-        List<JmmNode> classChainExprs = funcExpr.getDescendants(Kind.CLASS_CHAIN_EXPR);
-        List<String> classNameList = classChainExprs.get(0).getObjectAsList("className", String.class);
-        String methodName = classNameList.get(classNameList.size() - 1);
+        String methodName = null;
+        if (funcExpr.hasAttribute("name")) methodName = funcExpr.get("name");
+        else {
+            List<JmmNode> classChainExprs = funcExpr.getDescendants(Kind.CLASS_CHAIN_EXPR);
+            if (!funcExpr.getDescendants(Kind.CLASS_CHAIN_EXPR).isEmpty()) {
+                List<String> classNameList = classChainExprs.get(0).getObjectAsList("className", String.class);
+                methodName = classNameList.get(classNameList.size() - 1);
+            }
+        }
 
         List<String> methods = table.getMethods();
         if (methods.contains(methodName)) return true;

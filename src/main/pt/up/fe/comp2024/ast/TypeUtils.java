@@ -161,13 +161,23 @@ public class TypeUtils {
     }
 
     private static Type getVarExprTypeFromFuncExpr(JmmNode expr, SymbolTable table) {
-        String methodName;
+        String methodName = null;
         List<JmmNode> classChainExprs = expr.getDescendants(Kind.CLASS_CHAIN_EXPR);
-        List<String> classNames = classChainExprs.get(0).getObjectAsList("className", String.class);
-        methodName = expr.hasAttribute("name") ? expr.get("name") : classNames.get(classNames.size() - 1);
+        List<JmmNode> newClassExprs = expr.getDescendants(Kind.NEW_CLASS_EXPR);
+        if (expr.hasAttribute("name")) methodName = expr.get("name");
+        if (!classChainExprs.isEmpty()) {
+            List<String> classNames = classChainExprs.get(0).getObjectAsList("className", String.class);
+            methodName = methodName == null ? classNames.get(classNames.size() - 1) : methodName;
+        }
 
         // if class is imported, assume type is okay
-        Type classType = getClassFromClassChain(classChainExprs.get(0), table);
+        Type classType;
+        if (!classChainExprs.isEmpty()) classType = getClassFromClassChain(classChainExprs.get(0), table);
+        else if (!newClassExprs.isEmpty())
+            classType = new Type(newClassExprs.get(0).get("name"), false);
+        else {
+            classType = null;
+        }
         if (classType != null && (classType.hasAttribute("imported") ||
                 (classType.hasAttribute("classChain") && table.getImports().stream()
                         .anyMatch(importDecl -> importDecl.equals(classType.getName()))))) {
