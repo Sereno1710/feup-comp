@@ -1,5 +1,6 @@
 package pt.up.fe.comp2024.optimization;
 
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
@@ -94,6 +95,24 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         Type type = TypeUtils.getExprType(node, table);
         String ollirType = OptUtils.toOllirType(type);
 
+        var method = node.getParent();
+        while(method != null){
+            if(method.getKind().equals("MethodDecl")) {
+                var methodName = method.get("name");
+                var paramNum = 1;
+                for(Symbol param : table.getParameters(methodName)) {
+                    if(Objects.equals(param.getName(), id)) {
+                        String code = "$" + paramNum + "." + id + ollirType;
+
+                        return new OllirExprResult(code);
+                    }
+                    paramNum++;
+                }
+                break;
+            }
+            method = method.getParent();
+        }
+
         String code = id + ollirType;
 
         return new OllirExprResult(code);
@@ -168,7 +187,13 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
                 code.append(resOllirType);
                 code.append(END_STMT);
             } else {
-                var parentType = TypeUtils.getTypeFromString(node.getParent().get("name"), node.getParent(), table);
+                var parent = node.getParent();
+                if(Objects.equals(node.getParent().getKind(), "BinaryExpr")) {
+                    while(!Objects.equals(parent.getKind(), "AssignStmt")) {
+                        parent = parent.getParent();
+                    }
+                }
+                var parentType = TypeUtils.getTypeFromString(parent.get("name"), node.getParent(), table);
                 String parentTypeString = OptUtils.toOllirType(parentType);
 
                 String temp = OptUtils.getTemp();
