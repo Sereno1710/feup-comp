@@ -56,7 +56,7 @@ public class ArrayAccess extends AnalysisVisitor {
         }
 
         // Create error report
-        var message = "Invalid operation: access expression can only be used on an array.";
+        var message = "Invalid operation: Access expression can only be used on an array.";
         addReport(Report.newError(
                 Stage.SEMANTIC,
                 NodeUtils.getLine(accExpr),

@@ -84,7 +84,7 @@ type
     | name=INT
     | name=STRING (array=ARRAY)?
     | name=BOOLEAN (array=ARRAY)?
-    | name=(ID | 'main') (array=ARRAY)?
+    | name=(ID | 'main')
     ;
 
 methodDecl locals[boolean isPublic=false, boolean isStatic=false]
@@ -126,6 +126,7 @@ stmt
 expr
     : className+=(ID | 'this' | 'main') (DOT className+=(ID | 'main'))+ #ClassChainExpr
     | expr (DOT name=(ID | 'main'))* LPAREN (expr (CMA expr)*)? RPAREN #FuncExpr
+    | expr LRET expr RRET #AccExpr
     | NOT expr #NotExpr
     | expr op=(MUL  | DIV | REM) expr #BinaryExpr //
     | expr op=(ADD | SUB) expr #BinaryExpr //
@@ -133,7 +134,6 @@ expr
     | expr op=(EQ | NEQ) expr #BinaryExpr
     | expr op=AND expr #BinaryExpr
     | expr op=OR expr #BinaryExpr
-    | expr LRET expr RRET #AccExpr
     | expr (DOT 'length') #LengthExpr
     | NEW type LRET expr RRET #NewArray
     | NEW name=(ID | 'main') LPAREN expr* RPAREN #NewClassExpr
