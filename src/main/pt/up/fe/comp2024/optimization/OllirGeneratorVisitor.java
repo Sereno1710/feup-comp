@@ -46,6 +46,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         addVisit(PARAM, this::visitParam);
         addVisit(RETURN_STMT, this::visitReturn);
         addVisit(ASSIGN_STMT, this::visitAssignStmt);
+        addVisit(IF_STMT, this::visitIfStmt);
 
         setDefaultVisit(this::defaultVisit);
     }
@@ -73,8 +74,8 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         StringBuilder code = new StringBuilder();
 
         code.append("import ");
-        for(int i = 0; i < names.size(); i++) {
-            if(i != 0) {
+        for (int i = 0; i < names.size(); i++) {
+            if (i != 0) {
                 code.append(".");
             }
             code.append(names.get(i));
@@ -143,6 +144,32 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         return code.toString();
     }
 
+    private String visitIfStmt(JmmNode node, Void unused) {
+        int ifNum = OptUtils.getNextIfNum();
+        var conditionLabel = "if" + ifNum;
+        var endLabel = "endif" + ifNum;
+
+        StringBuilder code = new StringBuilder();
+
+        var condition = exprVisitor.visit(node.getJmmChild(0));
+        code.append(condition.getComputation());
+
+        code.append("if (").append(condition.getCode()).append(") goto ").append(conditionLabel).append(END_STMT);
+
+        if (node.getChildren().size() > 2) {
+            code.append(visit(node.getJmmChild(2)));
+        }
+
+        code.append("goto ").append(endLabel).append(END_STMT);
+        code.append(conditionLabel).append(":\n");
+
+        code.append(visit(node.getJmmChild(1)));
+
+        code.append(endLabel).append(":\n");
+
+        return code.toString();
+    }
+
 
     private String visitParam(JmmNode node, Void unused) {
 
@@ -184,7 +211,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
 
 
             var params = node.getJmmChild(1);
-            if(Objects.equals(params.getKind(), "Params")) {
+            if (Objects.equals(params.getKind(), "Params")) {
                 for (int i = 0; i < params.getNumChildren(); i++) {
                     if (i != 0) code.append(", ");
                     code.append(visit(params.getJmmChild(i)));
