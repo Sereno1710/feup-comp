@@ -50,7 +50,7 @@ public class OptUtils {
 
         String typeName = typeNode.get("name");
 
-        if (typeNode.hasAttribute("array")) return ".array" + toOllirType(typeName);
+        if (typeNode.hasAttribute("array") || typeNode.hasAttribute("vargs") ) return ".array" + toOllirType(typeName);
 
         return toOllirType(typeName);
     }
