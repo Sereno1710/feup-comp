@@ -91,7 +91,7 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
                 .append(ASSIGN).append(ollirArrayType).append(SPACE).append("new(array, ")
                 .append(node.getChildren().size()).append(".i32)").append(ollirArrayType).append(END_STMT);
 
-        for(int i = 0; i < node.getChildren().size(); i++) {
+        for (int i = 0; i < node.getChildren().size(); i++) {
             var arrayValue = visit(node.getJmmChild(i));
 
             computation.append(arrayValue.getComputation()).append(code).append("[").append(i).append(".i32]")
@@ -223,23 +223,63 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
         var importedLib = false;
         for (var importLib : table.getImports()) {
             String[] parts = importLib.split("\\.");
-            for (String part : parts) {
-                if (part.equals(libName)) {
-                    importedLib = true;
-                    break;
-                }
-            }
-            if (importedLib) {
+            if (parts[parts.length - 1].equals(libName)) {
+                importedLib = true;
                 break;
             }
         }
+        boolean declaredMethod = false;
+        for(String method: table.getMethods()) {
+            if(Objects.equals(functionName, method)) {
+                declaredMethod = true;
+                break;
+            }
+        }
+        if (declaredMethod) {
+            var defParams = table.getParameters(functionName);
+            for (int i = 1; i < node.getNumChildren(); i++) {
+                var child = node.getJmmChild(i);
+                var childCode = visit(child);
 
-        for (int i = 1; i < node.getNumChildren(); i++) {
-            var child = node.getJmmChild(i);
-            var childCode = visit(child);
-            funcParamsCode.append(", ");
-            funcParamsCode.append(childCode.getCode());
-            code.append(childCode.getComputation());
+                var varargsParam = i <= defParams.size() && defParams.get(i - 1).getType().hasAttribute("vargs");
+                var ollirType = OptUtils.toOllirType(table.getReturnType(functionName));
+                var ollirArrayType = ".array" + ollirType;
+
+                if (varargsParam) {
+                    var temp = OptUtils.getTemp() + ollirArrayType;
+                    computation.append(temp).append(SPACE)
+                            .append(ASSIGN).append(ollirArrayType).append(SPACE).append("new(array, ")
+                            .append(visit(node.getJmmChild(1)).getCode())
+                            .append(")").append(ollirArrayType).append(END_STMT);
+
+                    for (int j = i; j < node.getNumChildren(); j++) {
+                        var varargsChild = node.getJmmChild(j);
+                        var varargsChildCode = visit(varargsChild);
+
+                        computation.append(varargsChildCode.getComputation()).append(temp).append("[")
+                                .append(j).append(".i32]").append(ollirType).append(SPACE)
+                                .append(ASSIGN).append(ollirType).append(SPACE).append(varargsChildCode.getCode())
+                                .append(END_STMT);
+                    }
+
+                    funcParamsCode.append(", ");
+                    funcParamsCode.append(temp);
+
+                    break;
+                }
+
+                funcParamsCode.append(", ");
+                funcParamsCode.append(childCode.getCode());
+                code.append(childCode.getComputation());
+            }
+        } else {
+            for (int i = 1; i < node.getNumChildren(); i++) {
+                var child = node.getJmmChild(i);
+                var childCode = visit(child);
+                funcParamsCode.append(", ");
+                funcParamsCode.append(childCode.getCode());
+                code.append(childCode.getComputation());
+            }
         }
 
         if (importedLib) {
