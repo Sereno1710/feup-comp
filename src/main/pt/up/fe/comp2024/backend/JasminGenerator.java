@@ -574,6 +574,9 @@ public class JasminGenerator {
             code.append(generateUnary((UnaryOpInstruction) instruction.getCondition()));
             code.append("ifeq ").append(instruction.getLabel()).append(NL);
         }
+        if(instruction.getOperands().get(1).toString().equals("if_icmplt") || instruction.getOperands().get(1).toString().equals("if_icmpge")){
+            changeStack(-1);
+        }
         changeStack(-1);
         return code.toString();
     }
