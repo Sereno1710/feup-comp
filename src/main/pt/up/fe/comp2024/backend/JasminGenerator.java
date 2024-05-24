@@ -305,6 +305,7 @@ public class JasminGenerator {
             var temp = ((ArrayOperand) lhs).getIndexOperands().get(0);
             code.append(generators.apply(temp));
             code.append(generators.apply(rhs));
+            changeStack(1);
         }
 
         // Get register
@@ -318,11 +319,13 @@ public class JasminGenerator {
                 code.append("iastore").append(NL);
             } else {
                 changeStack(-1);
-                code.append("istore ").append(reg).append(NL);
+                if(reg < 4) code.append("istore_").append(reg).append(NL);
+                else code.append("istore ").append(reg).append(NL);
             }
         } else {
             changeStack(-1);
-            code.append("astore ").append(reg).append(NL);
+            if(reg < 4) code.append("astore_").append(reg).append(NL);
+            else code.append("astore ").append(reg).append(NL);
         }
 
         return code.toString();
@@ -333,10 +336,10 @@ public class JasminGenerator {
     }
 
     private String generateArrayElement(ArrayOperand array) {
-        changeStack(1);
         var code = new StringBuilder();
         var reg = currentMethod.getVarTable().get(array.getName()).getVirtualReg();
         code.append("aload_").append(reg).append(NL);
+        changeStack(1);
         code.append(generators.apply(array.getIndexOperands().get(0))).append("iaload").append(NL);
         changeStack(-1);
         return code.toString();
@@ -429,7 +432,7 @@ public class JasminGenerator {
         var fieldType = transformType(getField.getField().getType());
         code.append("getfield ").append(className).append("/").append(fieldName).append(" ").append(fieldType).append(NL);
 
-
+        changeStack(1);
         return code.toString();
     }
     private String generateReturn(ReturnInstruction returnInst) {
@@ -453,15 +456,13 @@ public class JasminGenerator {
         var code = new StringBuilder();
         var type = callInstruction.getInvocationType().toString();
         var a= ((Operand) callInstruction.getCaller()).getType();
-        var args = 0;
+        var args = -1;
         Operand first = (Operand) callInstruction.getOperands().get(0);
         var methodName="";
         switch (type) {
             case "NEW" -> {
-                args=-1;
                 if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.ARRAYREF)){
                     for(Element elem: callInstruction.getArguments()){
-                        args++;
                         code.append(generators.apply(elem));
                     }
                     code.append("newarray int").append(NL);
@@ -469,7 +470,6 @@ public class JasminGenerator {
                 }
                 else {
                     for(Element elem: callInstruction.getArguments()){
-                        args++;
                         code.append(generators.apply(elem));
                     }
                 }
@@ -488,16 +488,15 @@ public class JasminGenerator {
                     param.append(transformType(arg.getType()));
                 }
                 code.append("invokespecial ").append(methodName).append("/<init>").append("(").append(param).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
-                if(!callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) {
+                if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) {
                     args--;
                 }
             }
             case "invokevirtual" -> {
-                args=1;
                 code.append(generators.apply(first));
+                args++;
                 LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
                 StringBuilder parameters = new StringBuilder();
-                args++;
                 for (var op : callInstruction.getArguments()) {
                     args++;
                     code.append(generators.apply(op));
@@ -509,7 +508,7 @@ public class JasminGenerator {
                 var methodName2 = second.getLiteral().replace("\"","");
 
                 code.append(type).append(" ").append(getImportedClassName(((ClassType) first.getType()).getName())).append("/").append(methodName2).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
-                if(!callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) args--;
+                if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) args--;
             }
             case "invokestatic" -> {
                 code.append(generators.apply(first));
@@ -526,7 +525,7 @@ public class JasminGenerator {
                 code.append("invokestatic ");
                 code.append(getImportedClassName(((Operand) callInstruction.getCaller()).getName()));
                 code.append("/").append(second.getLiteral().replace("\"", "")).append("(").append(parameters).append(")").append(transformType(callInstruction.getReturnType())).append(NL);
-                if(!callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) args--;
+                if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.VOID)) args--;
             }
             case "arraylength" -> {
                 code.append(generators.apply(callInstruction.getCaller())).append("arraylength").append(NL);

@@ -193,6 +193,12 @@ public class TypeUtils {
         List<JmmNode> methods = root.getChildren(Kind.METHOD_DECL);
         for (JmmNode method : methods) {
             if (Objects.equals(method.get("name"), methodName)) {
+                if (method.getChild(0).hasAttribute("array")) {
+                    return getTypeFromTypeString(method.getChild(0).get("name") + "[]");
+                }
+                if (method.getChild(0).hasAttribute("vargs")) {
+                    return getTypeFromTypeString(method.getChild(0).get("name") + "...");
+                }
                 return getTypeFromTypeString(method.getChild(0).get("name"));
             }
         }
@@ -274,7 +280,7 @@ public class TypeUtils {
                 return new Type(BOOLEAN_TYPE_NAME, true);
             }
             default -> {
-                if (typeString.endsWith("[]")) return new Type(typeString.substring(0, typeString.length() - 2), true);
+                if (typeString.endsWith("[]")) return new Type(typeString, true);
                 return new Type(typeString, false);
             }
         }
