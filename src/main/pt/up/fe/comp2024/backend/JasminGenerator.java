@@ -11,7 +11,9 @@ import pt.up.fe.specs.util.utilities.StringLines;
 
 import javax.management.OperationsException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -34,7 +36,7 @@ public class JasminGenerator {
     private final FunctionClassMap<TreeNode, String> generators;
     private int limits_stack = 0;
     private int continuos_stack = 0;
-    private final int limits_locals = 0;
+    private int limits_locals = 0;
     public JasminGenerator(OllirResult ollirResult) {
         this.ollirResult = ollirResult;
         classUnit = this.ollirResult.getOllirClass();
@@ -143,6 +145,16 @@ public class JasminGenerator {
         // set method
         currentMethod = method;
         limits_stack = 0;
+        limits_locals = 0;
+        Set<Integer> v = new HashSet<Integer>();
+        for(var i : currentMethod.getVarTable().values()){
+            v.add(i.getVirtualReg());
+        }
+        limits_locals = v.size();
+        if(!currentMethod.isStaticMethod()){
+            if(!currentMethod.getVarTable().containsKey("this"))
+                limits_locals++;
+        }
         continuos_stack = 0;
         var code = new StringBuilder();
         var final_code = new StringBuilder();
@@ -183,7 +195,7 @@ public class JasminGenerator {
             }
         }
         final_code.append(".limit stack ").append(limits_stack).append(NL);
-        final_code.append(".limit locals 99").append(NL);
+        final_code.append(".limit locals ").append(limits_locals).append(NL);
         final_code.append(code);
         final_code.append(".end method\n");
 
