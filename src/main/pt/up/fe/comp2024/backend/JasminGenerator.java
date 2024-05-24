@@ -432,7 +432,7 @@ public class JasminGenerator {
         var fieldType = transformType(getField.getField().getType());
         code.append("getfield ").append(className).append("/").append(fieldName).append(" ").append(fieldType).append(NL);
 
-
+        changeStack(1);
         return code.toString();
     }
     private String generateReturn(ReturnInstruction returnInst) {
@@ -456,12 +456,11 @@ public class JasminGenerator {
         var code = new StringBuilder();
         var type = callInstruction.getInvocationType().toString();
         var a= ((Operand) callInstruction.getCaller()).getType();
-        var args = 0;
+        var args = -1;
         Operand first = (Operand) callInstruction.getOperands().get(0);
         var methodName="";
         switch (type) {
             case "NEW" -> {
-                args=-1;
                 if(callInstruction.getReturnType().getTypeOfElement().equals(ElementType.ARRAYREF)){
                     for(Element elem: callInstruction.getArguments()){
                         code.append(generators.apply(elem));
@@ -494,11 +493,10 @@ public class JasminGenerator {
                 }
             }
             case "invokevirtual" -> {
-                args=1;
                 code.append(generators.apply(first));
+                args++;
                 LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
                 StringBuilder parameters = new StringBuilder();
-                args++;
                 for (var op : callInstruction.getArguments()) {
                     args++;
                     code.append(generators.apply(op));
