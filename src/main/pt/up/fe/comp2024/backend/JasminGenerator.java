@@ -292,9 +292,9 @@ public class JasminGenerator {
             }
         }
 
+
         // Default handling for other cases
         code.append(generators.apply(rhs));
-
         // ArrayOperand handling (if lhs is an array element)
         if (lhs instanceof ArrayOperand array) {
             changeStack(1);
@@ -303,8 +303,10 @@ public class JasminGenerator {
             else code.append("aload ")
                     .append(reg)
                     .append(NL);
-            var temp = array.getIndexOperands().get(0);
-            code.append(generators.apply(temp));
+            for(var i: array.getIndexOperands()){
+                changeStack(1);
+                code.append(generators.apply(i));
+            }
             code.append(generators.apply(rhs));
             changeStack(1);
         }
@@ -316,7 +318,7 @@ public class JasminGenerator {
         if (lhs.getType().getTypeOfElement().equals(ElementType.INT32) ||
                 lhs.getType().getTypeOfElement().equals(ElementType.BOOLEAN)) {
             if (currentMethod.getVarTable().get(((Operand) lhs).getName()).getVarType().getTypeOfElement().equals(ElementType.ARRAYREF)) {
-                changeStack(-1);
+                changeStack(-2);
                 code.append("iastore").append(NL);
             } else {
                 changeStack(-1);
@@ -495,7 +497,6 @@ public class JasminGenerator {
             }
             case "invokevirtual" -> {
                 code.append(generators.apply(first));
-                args++;
                 LiteralElement second = (LiteralElement) callInstruction.getOperands().get(1);
                 StringBuilder parameters = new StringBuilder();
                 for (var op : callInstruction.getArguments()) {
