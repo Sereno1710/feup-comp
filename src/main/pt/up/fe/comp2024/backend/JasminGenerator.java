@@ -310,79 +310,85 @@ public class JasminGenerator {
     }
     private String generateAssign(AssignInstruction assign) {
         var code = new StringBuilder();
-
-        code.append(generators.apply(assign.getRhs()));
-
         var lhs = assign.getDest();
         var rhs = assign.getRhs();
-        if (lhs instanceof ArrayOperand) {
-            code.append("aload ").append(currentMethod.getVarTable().get(((ArrayOperand) lhs).getName()).getVirtualReg()).append(NL);
-            code.append(generators.apply(((ArrayOperand) lhs).getIndexOperands().get(0)));
-            code.append(generators.apply(assign.getRhs()));
-        }
-        if(rhs instanceof BinaryOpInstruction rhs_b){
-            if((rhs_b.getOperation().getOpType().equals(OperationType.ADD)) || (rhs_b.getOperation().getOpType().equals(OperationType.SUB))){
+
+        // Check if RHS is a BinaryOpInstruction
+        if (rhs instanceof BinaryOpInstruction rhs_b) {
+            if ((rhs_b.getOperation().getOpType().equals(OperationType.ADD)) ||
+                    (rhs_b.getOperation().getOpType().equals(OperationType.SUB))) {
+
                 Element left = rhs_b.getLeftOperand();
                 Element right = rhs_b.getRightOperand();
                 boolean realInc = false;
                 boolean range_byte = false;
-                if(left.isLiteral() && !right.isLiteral()){
-                     realInc = right.equals(assign.getDest());
-                     LiteralElement n = (LiteralElement) rhs_b.getLeftOperand();
-                    int val = Integer.parseInt(n.getLiteral());
-                    if(right.equals(lhs)){
-                        realInc = true;
+                int val = 0;
+
+                // Check for literal on the left side
+                if (left.isLiteral() && !right.isLiteral()) {
+                    realInc = ((Operand) right).getName().equals(((Operand) lhs).getName());
+                    val = Integer.parseInt(((LiteralElement) left).getLiteral());
+                    if (rhs_b.getOperation().getOpType().equals(OperationType.SUB)) {
+                        val = -val;
                     }
-                    if(rhs_b.getOperation().getOpType().equals(OperationType.SUB)){
-                        val= -val;
-                    }
-                    n.setLiteral(Integer.toString(val));
-                    if(Integer.parseInt(n.getLiteral()) >= -128 && Integer.parseInt(n.getLiteral()) <= 127){
-                        range_byte = true;
-                    }
-                     if(range_byte && realInc){
-                         code.append("iinc ").append(currentMethod.getVarTable().get(((Operand) lhs).getName()).getVirtualReg()).append(NL);
-                         return code.toString();
-                     }
                 }
-                else if(right.isLiteral() && !left.isLiteral()){
-                    realInc = left.equals(assign.getDest());
-                    LiteralElement n = (LiteralElement) rhs_b.getRightOperand();
-                    int val = Integer.parseInt(n.getLiteral());
-                    if(left.equals(lhs)){
-                        realInc = true;
+                // Check for literal on the right side
+                else if (right.isLiteral() && !left.isLiteral()) {
+                    realInc = ((Operand) left).getName().equals(((Operand) lhs).getName());
+                    val = Integer.parseInt(((LiteralElement) right).getLiteral());
+                    if (rhs_b.getOperation().getOpType().equals(OperationType.SUB)) {
+                        val = -val;
                     }
-                    if(rhs_b.getOperation().getOpType().equals(OperationType.SUB)){
-                        val= -val;
-                    }
-                    n.setLiteral(Integer.toString(val));
-                    if(Integer.parseInt(n.getLiteral()) >= -128 && Integer.parseInt(n.getLiteral()) <= 127){
-                        range_byte = true;
-                    }
-                    if(range_byte && realInc){
-                        code.append("iinc ").append(currentMethod.getVarTable().get(((Operand) lhs).getName()).getVirtualReg()).append(NL);
-                        return code.toString();
-                    }
+                }
+
+                // Check if the increment value is within the range of a byte
+                if (val >= -128 && val <= 127) {
+                    range_byte = true;
+                }
+
+                // If this is a real increment assignment and the value is within the range of a byte
+                if (range_byte && realInc) {
+                    code.append("iinc ")
+                            .append(currentMethod.getVarTable().get(((Operand) lhs).getName()).getVirtualReg())
+                            .append(" ")
+                            .append(val)
+                            .append(NL);
+                    return code.toString();
                 }
             }
         }
-        var operand = (Operand) lhs;
 
-        // get register
-        var reg = currentMethod.getVarTable().get(operand.getName()).getVirtualReg();
+        // Default handling for other cases
+        code.append(generators.apply(rhs));
 
-        // TODO: Hardcoded for int type, needs to be expanded
-        if(operand.getType().getTypeOfElement().toString().equals("INT32") | operand.getType().getTypeOfElement().toString().equals("BOOLEAN")){
-            if(currentMethod.getVarTable().get(operand.getName()).getVarType().getTypeOfElement().equals(ElementType.ARRAYREF)){
+        // ArrayOperand handling (if lhs is an array element)
+        if (lhs instanceof ArrayOperand) {
+            code.append("aload ")
+                    .append(currentMethod.getVarTable().get(((ArrayOperand) lhs).getName()).getVirtualReg())
+                    .append(NL);
+            var temp = ((ArrayOperand) lhs).getIndexOperands().get(0);
+            code.append(generators.apply(temp));
+            code.append(generators.apply(rhs));
+        }
+
+        // Get register
+        var reg = currentMethod.getVarTable().get(((Operand) lhs).getName()).getVirtualReg();
+
+        // Determine store instruction based on the type of the lhs operand
+        if (lhs.getType().getTypeOfElement().equals(ElementType.INT32) ||
+                lhs.getType().getTypeOfElement().equals(ElementType.BOOLEAN)) {
+            if (currentMethod.getVarTable().get(((Operand) lhs).getName()).getVarType().getTypeOfElement().equals(ElementType.ARRAYREF)) {
                 code.append("iastore").append(NL);
-                return code.toString();
+            } else {
+                code.append("istore ").append(reg).append(NL);
             }
-            code.append("istore ").append(reg).append(NL);
+        } else {
+            code.append("astore ").append(reg).append(NL);
         }
-        else code.append("astore ").append(reg).append(NL);
 
         return code.toString();
     }
+
     private String generateSingleOp(SingleOpInstruction singleOp) {
         return generators.apply(singleOp.getSingleOperand());
     }
@@ -390,8 +396,8 @@ public class JasminGenerator {
     private String generateArrayElement(ArrayOperand array) {
         var code = new StringBuilder();
         var reg = currentMethod.getVarTable().get(array.getName()).getVirtualReg();
-        code.append("aload ").append(reg).append(NL);
-        code.append(generators.apply(array.getIndexOperands().get(0))).append(NL).append("iaload").append(NL);
+        code.append("aload_").append(reg).append(NL);
+        code.append(generators.apply(array.getIndexOperands().get(0))).append("iaload").append(NL);
         return code.toString();
     }
     private String generateLiteral(LiteralElement literal) {
@@ -405,6 +411,9 @@ public class JasminGenerator {
             else {code.append("ldc ");}
 
             code.append(value == -1 ?  "m1" : value).append(NL);
+        }
+        else {
+            code.append("ldc ").append(literal.getLiteral()).append(NL);
         }
         return code.toString();
     }
