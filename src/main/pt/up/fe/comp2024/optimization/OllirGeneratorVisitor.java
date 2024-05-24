@@ -182,13 +182,13 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         code.append("if (").append(condition.getCode()).append(") goto ").append(conditionLabel).append(END_STMT);
 
         if (node.getChildren().size() > 2) {
-            code.append(exprVisitor.visit(node.getJmmChild(2)));
+            code.append(visit(node.getJmmChild(2)));
         }
 
         code.append("goto ").append(endLabel).append(END_STMT);
         code.append(conditionLabel).append(":\n");
 
-        code.append(exprVisitor.visit(node.getJmmChild(1)));
+        code.append(visit(node.getJmmChild(1)));
 
         code.append(endLabel).append(":\n");
 
@@ -212,7 +212,7 @@ public class OllirGeneratorVisitor extends AJmmVisitor<Void, String> {
         code.append("goto ").append(endLabel).append(END_STMT);
         code.append(loopLabel).append(":\n");
 
-        code.append(exprVisitor.visit(node.getJmmChild(1)));
+        code.append(visit(node.getJmmChild(1)));
 
         code.append("goto ").append(conditionLabel).append(END_STMT);
         code.append(endLabel).append(":\n");

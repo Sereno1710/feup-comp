@@ -259,8 +259,14 @@ public class OllirExprGeneratorVisitor extends PreorderJmmVisitor<Void, OllirExp
                         parent = parent.getParent();
                     }
                 }
-                var parentType = TypeUtils.getExprType(parent, table);
-                String parentTypeString = OptUtils.toOllirType(parentType);
+                var parentTypeString = "";
+                if (Objects.equals(node.getParent().getKind(), "AccExpr")) {
+                    parentTypeString = OptUtils.toOllirType(TypeUtils.getExprType(parent, table));
+                } else if (Objects.equals(node.getParent().getKind(), "FuncExpr")) {
+                    parentTypeString = OptUtils.toOllirType(table.getReturnType(node.getJmmChild(0).getObjectAsList("className", String.class).get(1)));
+                } else {
+                    parentTypeString = OptUtils.toOllirType(TypeUtils.getTypeFromString(parent.get("name"), node.getParent(), table));
+                }
 
                 String temp = OptUtils.getTemp();
                 code.append(temp).append(parentTypeString);
